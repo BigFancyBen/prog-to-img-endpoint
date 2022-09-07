@@ -130,7 +130,7 @@ async function buildImage(data){
 
 async function loadItems(objs, ctx) {
   await Promise.all(objs.map((obj, index) =>
-    loadImage(`data:image/png;base64,${obj.img}`).then((imageObj) => {
+    loadImage(obj.img).then((imageObj) => {
       paintIcons(ctx, imageObj, index, obj.count);
     })
   ));
@@ -139,14 +139,14 @@ async function loadItems(objs, ctx) {
 async function openSkills(objs) {
   let skills = [];
   await Promise.all(objs.map((obj) => 
-    getSkill(`${__dirname}/icons/${obj.skill}.png`).then(response => {
+    getLocalImage(`${__dirname}/icons/${obj.skill}.png`).then(response => {
       skills.push({'img': `data:image/png;base64,${response.toString('base64')}`, 'xp': obj.xp});
     })
   ));
   return skills;
 }
 
-const getSkill = async(file)=>{
+const getLocalImage = async(file)=>{
   const result = await fs.readFile(file)
   return result;
 }
@@ -224,8 +224,10 @@ async function getMultiple(objectsToGet) {
     }
   });
   await Promise.all(objectsToGet.loot.map(obj =>
-    axios.get(`https://api.osrsbox.com/items/${obj.id}`).then(response => {
-      items.push({'img': response.data.icon, 'count': obj.count});
+    getLocalImage(`${__dirname}/icons/items/${obj.id}.png`).then(response => {
+      if(obj.id !==undefined){
+        items.push({'img': `data:image/png;base64,${response.toString('base64')}`, 'count': obj.count});
+      }
     })
   ));
   return items;
