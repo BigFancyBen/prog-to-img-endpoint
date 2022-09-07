@@ -4,7 +4,7 @@ const fs = require('fs').promises;
 const express = require('express');
 const canvasWidth = 330;
 let ctx = "";
-
+var itemSearch = require('./itemSearch.json');
 const app = express();
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
@@ -16,6 +16,25 @@ app.listen(process.env.PORT || 3000, function(){
 app.post('/getImage', async function (req, res) {
     const image = await buildImage(req.body);
     res.send(image);
+})
+
+app.post('/getCollectionLogItem', async function (req, res) {
+  console.log(req.body.itemName);
+  let i = 0;
+  let itemsToSearch = true;
+  while(itemsToSearch){
+    if(itemSearch[i]?.name !== req.body.itemName){
+      i++;
+    } else {
+      itemsToSearch = false;
+    }
+  }
+  getLocalImage(`${__dirname}/icons/items/${i}.png`).then(response => {
+    if(response){
+      res.send({'img': `data:image/png;base64,${response.toString('base64')}`});
+    }
+  })
+
 })
 
 app.get('/', (req, res) => {
