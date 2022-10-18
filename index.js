@@ -55,22 +55,22 @@ app.post('/getCollectionLogItem', async function (req, res) {
                 //write the script name
                 ctx.textAlign = "center";
             ctx.font = "25px Runescape";
-            ctx.strokeText(`${req.body.userName}'s Collection Log`, 200, 45);
-            ctx.fillText(`${req.body.userName}'s Collection Log`, 200, 45);
+            ctx.strokeText(`${req.body.userName}'s Collection Log`, 198, 45);
+            ctx.fillText(`${req.body.userName}'s Collection Log`, 198, 45);
           
             //write the date
             ctx.font = "16px Runescape";
             const curDate = new Date().toLocaleDateString('en-US');
-            ctx.strokeText(`${curDate} - New item: `, 200, 100);
-            ctx.fillText(`${curDate} - New item: `, 200, 100);
+            ctx.strokeText(`${curDate} - New item: `, 198, 100);
+            ctx.fillText(`${curDate} - New item: `, 198, 100);
       
             //write the date
             ctx.font = "22px Runescape";
             ctx.fillStyle = "#fff";
-            ctx.strokeText(req.body.itemName, 200, 125);
-            ctx.fillText(req.body.itemName, 200, 125);
+            ctx.strokeText(req.body.itemName, 198, 125);
+            ctx.fillText(req.body.itemName, 198, 125);
             loadImage(newItemIcon).then((imageObj) => {
-              ctx.drawImage( imageObj, 180, 135, 50, 50);
+              ctx.drawImage( imageObj, 173, 135, 50, 50);
                         //the prog report
               const response = {
                 statusCode: 200,
