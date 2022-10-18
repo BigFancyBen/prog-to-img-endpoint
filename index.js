@@ -29,12 +29,60 @@ app.post('/getCollectionLogItem', async function (req, res) {
       itemsToSearch = false;
     }
   }
-  getLocalImage(`${__dirname}/icons/items/${i}.png`).then(response => {
-    if(response){
-      res.send({'img': `data:image/png;base64,${response.toString('base64')}`});
+  getLocalImage(`${__dirname}/icons/items/${i}.png`).then(itemIcon => {
+    if(itemIcon){
+      //res.send({'img': `data:image/png;base64,${response.toString('base64')}`});
+      getLocalImage(`${__dirname}/icons/collection-log.png`).then(collectionLogBackground => {
+        if(collectionLogBackground){
+          let canvas = createCanvas(396, 221);
+          ctx = canvas.getContext("2d");
+          const newItemIcon = `data:image/png;base64,${itemIcon.toString('base64')}`;
+          const collectionLogBG = `data:image/png;base64,${collectionLogBackground.toString('base64')}`
+
+          registerFont(__dirname.concat('/font/runescape.ttf'), { family: 'Runescape' });
+          ctx.lineWidth = 2;
+        
+          ctx.shadowOffsetX = 2;
+          ctx.shadowOffsetY = 2;
+          ctx.shadowBlur = 2;
+          ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+          
+          
+          ctx.fillStyle = "#ff9a1d";
+
+          loadImage(collectionLogBG).then((imageObj) => {
+            ctx.drawImage( imageObj, 0, 0, 396, 221);
+                //write the script name
+                ctx.textAlign = "center";
+            ctx.font = "25px Runescape";
+            ctx.strokeText(`${req.body.userName}'s Collection Log`, 200, 45);
+            ctx.fillText(`${req.body.userName}'s Collection Log`, 200, 45);
+          
+            //write the date
+            ctx.font = "16px Runescape";
+            const curDate = new Date().toLocaleDateString('en-US');
+            ctx.strokeText(`${curDate} - New item: `, 200, 100);
+            ctx.fillText(`${curDate} - New item: `, 200, 100);
+      
+            //write the date
+            ctx.font = "22px Runescape";
+            ctx.fillStyle = "#fff";
+            ctx.strokeText(req.body.itemName, 200, 125);
+            ctx.fillText(req.body.itemName, 200, 125);
+            loadImage(newItemIcon).then((imageObj) => {
+              ctx.drawImage( imageObj, 180, 135, 50, 50);
+                        //the prog report
+              const response = {
+                statusCode: 200,
+                body: JSON.stringify(canvas.toDataURL())
+              };
+              res.send(response);
+            })
+          })
+        }
+      })
     }
   })
-
 })
 
 app.get('/', (req, res) => {
