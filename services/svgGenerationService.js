@@ -33,36 +33,41 @@ export async function generateProgressSVG(data) {
   const canvasHeight = titleHeight + lootHeight + xpHeight
   const canvasWidth = CANVAS_CONFIG.WIDTH
 
-  // Start SVG
+  // Start SVG with transparent background
   let svg = `<svg width="${canvasWidth}" height="${canvasHeight}" xmlns="http://www.w3.org/2000/svg">`
   
-  // Add font definition
+  // Add font definition and drop shadow filter
   svg += `<defs>
+    <filter id="rs-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="0" flood-color="black" flood-opacity="1"/>
+    </filter>
     <style>
-      @font-face {
-        font-family: 'Runescape';
-        src: url('data:font/truetype;base64,${await getFontBase64()}') format('truetype');
+      .runescape-font {
+        font-family: 'RuneScape UF', 'Runescape', monospace;
+        font-weight: normal;
+        font-style: normal;
       }
-      .runescape-font { font-family: 'Runescape', monospace; }
-      .title-text { font-size: 30px; fill: ${COLORS.YELLOW}; stroke: black; stroke-width: 2; }
-      .subtitle-text { font-size: 16px; fill: ${COLORS.YELLOW}; stroke: black; stroke-width: 2; }
-      .section-text { font-size: 20px; fill: ${COLORS.YELLOW}; stroke: black; stroke-width: 2; }
-      .small-text { font-size: 14px; fill: ${COLORS.YELLOW}; stroke: black; stroke-width: 2; }
-      .item-count { font-size: 14px; fill: ${COLORS.YELLOW}; stroke: black; stroke-width: 2; text-anchor: end; }
-      .xp-text { font-size: 16px; fill: ${COLORS.YELLOW}; stroke: black; stroke-width: 2; text-anchor: middle; }
+      .yellow-text { fill: #ffff00; }
+      .orange-text { fill: #ff981f; }
+      .white-text { fill: #ffffff; }
+      .title-text { font-size: 30px; }
+      .subtitle-text { font-size: 16px; }
+      .section-text { font-size: 20px; }
+      .small-text { font-size: 14px; }
+      .item-count { font-size: 14px; text-anchor: end; }
+      .xp-text { font-size: 16px; text-anchor: middle; }
     </style>
   </defs>`
 
-  // Background
-  svg += `<rect width="${canvasWidth}" height="${canvasHeight}" fill="white"/>`
+  // No background rect - transparent background
   
   // Title
-  svg += `<text x="15" y="40" class="runescape-font title-text">${escapeXML(data.script_name)}</text>`
+  svg += `<text x="15" y="40" class="runescape-font yellow-text title-text" filter="url(#rs-shadow)">${escapeXML(data.script_name)}</text>`
   
   // Date and runtime
   const runtime = formatRuntime(data.runtime)
   const curDate = getCurrentDate()
-  svg += `<text x="15" y="60" class="runescape-font subtitle-text">${curDate} - ${runtime}</text>`
+  svg += `<text x="15" y="60" class="runescape-font yellow-text subtitle-text" filter="url(#rs-shadow)">${curDate} - ${runtime}</text>`
   
   // Dividers
   svg += `<line x1="0" y1="${titleHeight}" x2="${canvasWidth}" y2="${titleHeight}" stroke="black" stroke-width="0.5"/>`
@@ -74,14 +79,14 @@ export async function generateProgressSVG(data) {
 
   // Loot section
   if (data?.loot?.length) {
-    svg += `<text x="15" y="${currentY + 25}" class="runescape-font section-text">Loot:</text>`
+    svg += `<text x="15" y="${currentY + 25}" class="runescape-font yellow-text section-text" filter="url(#rs-shadow)">Loot:</text>`
     svg += await generateLootIcons(data.loot, currentY + 35)
     currentY += lootHeight
   }
 
   // XP section
   if (data?.xp_earned?.length) {
-    svg += `<text x="15" y="${currentY + 25}" class="runescape-font section-text">XP:</text>`
+    svg += `<text x="15" y="${currentY + 25}" class="runescape-font yellow-text section-text" filter="url(#rs-shadow)">XP:</text>`
     svg += await generateXPIcons(data.xp_earned, currentY)
   }
 
@@ -106,17 +111,22 @@ export async function generateCollectionLogSVG(data) {
 
   let svg = `<svg width="${WIDTH}" height="${HEIGHT}" xmlns="http://www.w3.org/2000/svg">`
   
-  // Add font definition
+  // Add font definition and drop shadow filter
   svg += `<defs>
+    <filter id="rs-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="0" flood-color="black" flood-opacity="1"/>
+    </filter>
     <style>
-      @font-face {
-        font-family: 'Runescape';
-        src: url('data:font/truetype;base64,${await getFontBase64()}') format('truetype');
+      .runescape-font {
+        font-family: 'RuneScape UF', 'Runescape', monospace;
+        font-weight: normal;
+        font-style: normal;
       }
-      .runescape-font { font-family: 'Runescape', monospace; }
-      .title-text { font-size: 25px; fill: ${COLORS.ORANGE}; stroke: black; stroke-width: 2; text-anchor: middle; }
-      .date-text { font-size: 16px; fill: ${COLORS.ORANGE}; stroke: black; stroke-width: 2; text-anchor: middle; }
-      .item-text { font-size: 22px; fill: ${COLORS.WHITE}; stroke: black; stroke-width: 2; text-anchor: middle; }
+      .orange-text { fill: #ff981f; }
+      .white-text { fill: #ffffff; }
+      .title-text { font-size: 25px; text-anchor: middle; }
+      .date-text { font-size: 16px; text-anchor: middle; }
+      .item-text { font-size: 22px; text-anchor: middle; }
     </style>
   </defs>`
 
@@ -124,14 +134,14 @@ export async function generateCollectionLogSVG(data) {
   svg += `<image href="${bgImageBase64}" width="${WIDTH}" height="${HEIGHT}"/>`
   
   // Title
-  svg += `<text x="${WIDTH/2}" y="45" class="runescape-font title-text">${escapeXML(data.userName)}'s Collection Log</text>`
+  svg += `<text x="${WIDTH/2}" y="45" class="runescape-font orange-text title-text" filter="url(#rs-shadow)">${escapeXML(data.userName)}'s Collection Log</text>`
   
   // Date and new item text
   const curDate = getCurrentDate()
-  svg += `<text x="${WIDTH/2}" y="100" class="runescape-font date-text">${curDate} - New item:</text>`
+  svg += `<text x="${WIDTH/2}" y="100" class="runescape-font orange-text date-text" filter="url(#rs-shadow)">${curDate} - New item:</text>`
   
   // Item name
-  svg += `<text x="${WIDTH/2}" y="125" class="runescape-font item-text">${escapeXML(data.itemName)}</text>`
+  svg += `<text x="${WIDTH/2}" y="125" class="runescape-font white-text item-text" filter="url(#rs-shadow)">${escapeXML(data.itemName)}</text>`
   
   // Item icon
   svg += `<image href="${itemIconUrl}" x="${ICON_POSITION.x}" y="${ICON_POSITION.y}" width="${ICON_SIZE}" height="${ICON_SIZE}"/>`
@@ -166,7 +176,7 @@ async function generateLootIcons(lootItems, startY) {
       
       // Item count
       const formattedCount = formatCount(item.count)
-      svg += `<text x="${xOffset + 30}" y="${yOffset + 30}" class="runescape-font item-count">${formattedCount}</text>`
+      svg += `<text x="${xOffset + 30}" y="${yOffset + 30}" class="runescape-font yellow-text item-count" filter="url(#rs-shadow)">${formattedCount}</text>`
     } catch (error) {
       console.warn(`Could not load icon for item ${item.id}:`, error.message)
     }
@@ -197,7 +207,7 @@ async function generateXPIcons(xpData, startY) {
       
       // XP text
       const formattedXP = formatXP(xpItem.xp)
-      svg += `<text x="${xOffset + 12.5}" y="${yOffset + 40}" class="runescape-font xp-text">${formattedXP}</text>`
+      svg += `<text x="${xOffset + 12.5}" y="${yOffset + 40}" class="runescape-font yellow-text xp-text" filter="url(#rs-shadow)">${formattedXP}</text>`
     } catch (error) {
       console.warn(`Could not load icon for skill ${xpItem.skill}:`, error.message)
     }
@@ -236,7 +246,9 @@ function processCoinStacks(lootItems) {
  */
 async function getFontBase64() {
   try {
-    const fontBuffer = await readFile(join(__dirname, '../../font/runescape.ttf'))
+    const fontPath = join(process.cwd(), 'font', 'runescape.ttf')
+    console.log('Attempting to load font from:', fontPath)
+    const fontBuffer = await readFile(fontPath)
     return fontBuffer.toString('base64')
   } catch (error) {
     console.warn('Could not load font, using fallback')
@@ -251,7 +263,12 @@ async function getFontBase64() {
  */
 export async function svgToPng(svgString) {
   return await sharp(Buffer.from(svgString))
-    .png()
+    .png({ 
+      quality: 100,
+      compressionLevel: 0,
+      adaptiveFiltering: false,
+      force: true
+    })
     .toBuffer()
 }
 

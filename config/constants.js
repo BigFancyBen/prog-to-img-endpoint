@@ -18,8 +18,8 @@ export const CANVAS_CONFIG = {
 
 export const COLORS = {
   YELLOW: '#ffff00',
-  ORANGE: '#ff9a1d',
-  WHITE: '#fff'
+  ORANGE: '#ff981f',
+  WHITE: '#ffffff'
 }
 
 export const FONTS = {
