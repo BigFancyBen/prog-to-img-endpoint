@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSRS API Tester</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .server-status {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .server-status.online {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .server-status.offline {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .test-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover { background: #0056b3; }
+        .test-button.success { background: #28a745; }
+        .test-button.error { background: #dc3545; }
+        .test-button:disabled { background: #6c757d; cursor: not-allowed; }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .result.success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .result.error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .image-result img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎮 OSRS API & Progress Report Tester</h1>
+        <p>Comprehensive testing system for OSRS API endpoints and image generation</p>
+    </div>
+
+    <div id="serverStatus" class="server-status">
+        <h3>🔍 Checking server connection...</h3>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number" id="totalTests">0</div>
+            <div>Total Tests</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="passedTests">0</div>
+            <div>Passed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="failedTests">0</div>
+            <div>Failed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="successRate">0%</div>
+            <div>Success Rate</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Progress Report Tests</h2>
+        <div class="test-grid" id="progressTests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Collection Log Tests</h2>
+        <div class="test-grid" id="collectionTests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 OSRS API Tests</h2>
+        <div class="test-grid" id="apiTests"></div>
+    </div>
+
+    <script>
+        class OSRSAPITester {
+            constructor() {
+                this.serverUrl = this.detectServerUrl();
+                this.stats = { total: 0, passed: 0, failed: 0 };
+                this.testFunctions = {};
+            }
+
+            detectServerUrl() {
+                // Auto-detect server URL
+                if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                    return window.location.origin;
+                }
+                return 'http://localhost:3002';
+            }
+
+            async checkServerStatus() {
+                const statusDiv = document.getElementById('serverStatus');
+                
+                try {
+                    const response = await axios.get(`${this.serverUrl}/osrs`, { timeout: 5000 });
+                    statusDiv.className = 'server-status online';
+                    statusDiv.innerHTML = `
+                        <h3>✅ Server Connected</h3>
+                        <p><strong>URL:</strong> ${this.serverUrl}</p>
+                        <p><strong>Status:</strong> Online</p>
+                    `;
+                    return true;
+                } catch (error) {
+                    statusDiv.className = 'server-status offline';
+                    statusDiv.innerHTML = `
+                        <h3>❌ Server Connection Failed</h3>
+                        <p><strong>URL:</strong> ${this.serverUrl}</p>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Solution:</strong> Run <code>npm run dev</code> to start the server</p>
+                    `;
+                    return false;
+                }
+            }
+
+            createTestCard(testName, testFunction, containerId) {
+                const container = document.getElementById(containerId);
+                const card = document.createElement('div');
+                card.className = 'test-card';
+                
+                card.innerHTML = `
+                    <h3>${testName}</h3>
+                    <button class="test-button" onclick="tester.runTest('${testName}', this)">Run Test</button>
+                    <div class="result" style="display: none;"></div>
+                `;
+                
+                container.appendChild(card);
+                this.testFunctions[testName] = testFunction;
+            }
+
+            async runTest(testName, button) {
+                const card = button.parentElement;
+                const resultDiv = card.querySelector('.result');
+                const testFunction = this.testFunctions[testName];
+
+                button.disabled = true;
+                button.textContent = 'Running...';
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = 'Running test...';
+
+                this.stats.total++;
+                this.updateStats();
+
+                try {
+                    const startTime = Date.now();
+                    const data = await testFunction();
+                    const duration = Date.now() - startTime;
+
+                    this.stats.passed++;
+                    button.className = 'test-button success';
+                    button.textContent = '✅ Passed';
+                    resultDiv.className = 'result success';
+
+                    if (typeof data === 'string' && data.startsWith('data:image')) {
+                        resultDiv.innerHTML = `
+                            <div class="image-result">
+                                <img src="${data}" alt="${testName}" />
+                            </div>
+                            <p><strong>Duration:</strong> ${duration}ms</p>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <p><strong>Success!</strong> (${duration}ms)</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        `;
+                    }
+                } catch (error) {
+                    this.stats.failed++;
+                    button.className = 'test-button error';
+                    button.textContent = '❌ Failed';
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<p><strong>Error:</strong> ${error.message}</p>`;
+                }
+
+                this.updateStats();
+            }
+
+            updateStats() {
+                document.getElementById('totalTests').textContent = this.stats.total;
+                document.getElementById('passedTests').textContent = this.stats.passed;
+                document.getElementById('failedTests').textContent = this.stats.failed;
+                
+                const successRate = this.stats.total > 0 ? Math.round((this.stats.passed / this.stats.total) * 100) : 0;
+                document.getElementById('successRate').textContent = `${successRate}%`;
+            }
+
+            setupTests() {
+                // Progress Report Tests
+                this.createTestCard('Complex Progress Report', async () => {
+                    const response = await axios.post(`${this.serverUrl}/api/progress-image`, {
+                        script_name: "Chaos Druids",
+                        loot: [
+                            {"id": 203, "name": "Grimy tarromin", "count": 36},
+                            {"id": 199, "name": "Grimy guam leaf", "count": 84},
+                            {"id": 213, "name": "Grimy kwuarm", "count": 5},
+                            {"id": 561, "name": "Nature rune", "count": 4},
+                            {"id": 211, "name": "Grimy avantoe", "count": 20},
+                            {"id": 217, "name": "Grimy dwarf weed", "count": 2},
+                            {"id": 201, "name": "Grimy marrentill", "count": 44},
+                            {"id": 563, "name": "Law rune", "count": 32},
+                            {"id": 995, "name": "Coins", "count": 5420},
+                            {"id": 985, "name": "Tooth half of key", "count": 2},
+                            {"id": 207, "name": "Grimy ranarr weed", "count": 20},
+                            {"id": 215, "name": "Grimy cadantine", "count": 9},
+                            {"id": 9142, "name": "Mithril bolts", "count": 116},
+                            {"id": 13471, "name": "Ensouled chaos druid head", "count": 8}
+                        ],
+                        runtime: 101,
+                        xp_earned: [
+                            {"skill": "strength", "xp": "42,069"},
+                            {"skill": "hitpoints", "xp": "11,022"}
+                        ]
+                    });
+                    return response.data.body ? JSON.parse(response.data.body) : response.data;
+                }, 'progressTests');
+
+                this.createTestCard('Agility Training', async () => {
+                    const response = await axios.post(`${this.serverUrl}/api/progress-image`, {
+                        script_name: "Seers Agility",
+                        runtime: 60,
+                        xp_earned: [{"skill": "agility", "xp": "126,585"}],
+                        loot: [{"id": 11849, "name": "Mark of grace", "count": 43}]
+                    });
+                    return response.data.body ? JSON.parse(response.data.body) : response.data;
+                }, 'progressTests');
+
+                // Collection Log Tests
+                this.createTestCard('Rare Item Collection', async () => {
+                    const response = await axios.post(`${this.serverUrl}/api/collection-log`, {
+                        itemName: "Jar of dirt",
+                        userName: "TestPlayer"
+                    });
+                    return response.data.body ? JSON.parse(response.data.body) : response.data;
+                }, 'collectionTests');
+
+                this.createTestCard('Equipment Collection', async () => {
+                    const response = await axios.post(`${this.serverUrl}/api/collection-log`, {
+                        itemName: "Verac's brassard",
+                        userName: "Big Fancy Ben"
+                    });
+                    return response.data.body ? JSON.parse(response.data.body) : response.data;
+                }, 'collectionTests');
+
+                // OSRS API Tests
+                this.createTestCard('Items List', async () => {
+                    const response = await axios.get(`${this.serverUrl}/osrs/items?max_results=5`);
+                    return response.data;
+                }, 'apiTests');
+
+                this.createTestCard('Specific Item', async () => {
+                    const response = await axios.get(`${this.serverUrl}/osrs/items/995`);
+                    return response.data;
+                }, 'apiTests');
+
+                this.createTestCard('Equipment List', async () => {
+                    const response = await axios.get(`${this.serverUrl}/osrs/equipment?max_results=3`);
+                    return response.data;
+                }, 'apiTests');
+
+                this.createTestCard('Weapons List', async () => {
+                    const response = await axios.get(`${this.serverUrl}/osrs/weapons?max_results=3`);
+                    return response.data;
+                }, 'apiTests');
+
+                this.createTestCard('Monsters List', async () => {
+                    const response = await axios.get(`${this.serverUrl}/osrs/monsters?max_results=3`);
+                    return response.data;
+                }, 'apiTests');
+
+                this.createTestCard('Search Items', async () => {
+                    const response = await axios.get(`${this.serverUrl}/osrs/search/items?q=dragon`);
+                    return response.data;
+                }, 'apiTests');
+
+                this.createTestCard('Search Monsters', async () => {
+                    const response = await axios.get(`${this.serverUrl}/osrs/search/monsters?q=demon`);
+                    return response.data;
+                }, 'apiTests');
+            }
+        }
+
+        // Initialize and run
+        let tester;
+        document.addEventListener('DOMContentLoaded', async () => {
+            tester = new OSRSAPITester();
+            
+            const serverOnline = await tester.checkServerStatus();
+            if (serverOnline) {
+                tester.setupTests();
+                
+                // Auto-run first test after a delay
+                setTimeout(() => {
+                    const firstButton = document.querySelector('.test-button');
+                    if (firstButton) firstButton.click();
+                }, 1000);
+            }
+        });
+
+        // Make tester globally accessible
+        window.tester = tester;
+    </script>
+</body>
+</html> 
