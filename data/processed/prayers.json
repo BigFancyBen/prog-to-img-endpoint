@@ -1,0 +1,412 @@
+{
+  "1": {
+    "id": 1,
+    "name": "Thick Skin",
+    "description": "Increases your defence by 5%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Thick_Skin",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 1
+    }
+  },
+  "2": {
+    "id": 2,
+    "name": "Burst of Strength",
+    "description": "Increases your strength by 5%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Burst_of_Strength",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 4
+    }
+  },
+  "3": {
+    "id": 3,
+    "name": "Clarity of Thought",
+    "description": "Increases your attack by 5%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Clarity_of_Thought",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 7
+    }
+  },
+  "4": {
+    "id": 4,
+    "name": "Sharp Eye",
+    "description": "Increases your Ranging by 5%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Sharp_Eye",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 8
+    }
+  },
+  "5": {
+    "id": 5,
+    "name": "Mystic Will",
+    "description": "Increases your magical attack and defence by 5%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Mystic_Will",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 9
+    }
+  },
+  "6": {
+    "id": 6,
+    "name": "Rock Skin",
+    "description": "Increases your defence by 10%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Rock_Skin",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 10
+    }
+  },
+  "7": {
+    "id": 7,
+    "name": "Superhuman Strength",
+    "description": "Increases your strength by 10%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Superhuman_Strength",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 13
+    }
+  },
+  "8": {
+    "id": 8,
+    "name": "Improved Reflexes",
+    "description": "Increases your attack by 10%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Improved_Reflexes",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 16
+    }
+  },
+  "9": {
+    "id": 9,
+    "name": "Rapid Restore",
+    "description": "2x restore rate for all stats except Hitpoints and Prayer.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Rapid_Restore",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 19
+    }
+  },
+  "10": {
+    "id": 10,
+    "name": "Rapid Heal",
+    "description": "2x restore rate for Hitpoints stat.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Rapid_Heal",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 22
+    }
+  },
+  "11": {
+    "id": 11,
+    "name": "Protect Item",
+    "description": "Keep 1 extra item if you die.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Protect_Item",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 25
+    }
+  },
+  "12": {
+    "id": 12,
+    "name": "Hawk Eye",
+    "description": "Increases your Ranging by 10%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Hawk_Eye",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 26
+    }
+  },
+  "13": {
+    "id": 13,
+    "name": "Mystic Lore",
+    "description": "Increases your magical attack and defence by 10%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Mystic_Lore",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 27
+    }
+  },
+  "14": {
+    "id": 14,
+    "name": "Steel Skin",
+    "description": "Increases your defence by 15%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Steel_Skin",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 28
+    }
+  },
+  "15": {
+    "id": 15,
+    "name": "Ultimate Strength",
+    "description": "Increases your strength by 15%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Ultimate_Strength",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 31
+    }
+  },
+  "16": {
+    "id": 16,
+    "name": "Incredible Reflexes",
+    "description": "Increases your attack by 15%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Incredible_Reflexes",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 34
+    }
+  },
+  "17": {
+    "id": 17,
+    "name": "Protect from Magic",
+    "description": "Protection from magical attacks.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Protect_from_Magic",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 37
+    }
+  },
+  "18": {
+    "id": 18,
+    "name": "Protect from Missiles",
+    "description": "Protection from ranged attacks.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Protect_from_Missiles",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 40
+    }
+  },
+  "19": {
+    "id": 19,
+    "name": "Protect from Melee",
+    "description": "Protection from close attacks.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Protect_from_Melee",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 43
+    }
+  },
+  "20": {
+    "id": 20,
+    "name": "Eagle Eye",
+    "description": "Increases your Ranging by 15%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Eagle_Eye",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 44
+    }
+  },
+  "21": {
+    "id": 21,
+    "name": "Mystic Might",
+    "description": "Increases your magical attack and defence by 15%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": false,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Mystic_Might",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 45
+    }
+  },
+  "22": {
+    "id": 22,
+    "name": "Retribution",
+    "description": "Inflicts damage to nearby targets if you die.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": true,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Retribution",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 46
+    }
+  },
+  "23": {
+    "id": 23,
+    "name": "Redemption",
+    "description": "Heals you when damaged and health falls below 10%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": true,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Redemption",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 49
+    }
+  },
+  "24": {
+    "id": 24,
+    "name": "Smite",
+    "description": "1/4 of damage dealt is also removed from opponent's Prayer.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": true,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Smite",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 52
+    }
+  },
+  "25": {
+    "id": 25,
+    "name": "Preserve",
+    "description": "Boosted stats last 50% longer.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": true,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Preserve",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 55
+    }
+  },
+  "26": {
+    "id": 26,
+    "name": "Chivalry",
+    "description": "Increases your defence by 20%, strength by 18%, and attack by 15%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": true,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Chivalry",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 60,
+      "defence": 65
+    }
+  },
+  "27": {
+    "id": 27,
+    "name": "Piety",
+    "description": "Increases your defence by 25%, strength by 23%, and attack by 20%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": true,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Piety",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 70,
+      "defence": 70
+    }
+  },
+  "28": {
+    "id": 28,
+    "name": "Rigour",
+    "description": "Increases your Ranged attack by 20% and damage by 23%, and your defence by 25%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": true,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Rigour",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 74,
+      "defence": 70
+    }
+  },
+  "29": {
+    "id": 29,
+    "name": "Augury",
+    "description": "Increases your magical attack and defence by 25%, and your defence by 25%.",
+    "level_required": 1,
+    "drain_rate": 1,
+    "members": true,
+    "wiki_url": "https://oldschool.runescape.wiki/w/Augury",
+    "prayer_type": "standard",
+    "effects": [],
+    "requirements": {
+      "prayer": 77,
+      "defence": 70
+    }
+  }
+}

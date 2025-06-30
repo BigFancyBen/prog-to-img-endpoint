@@ -1,0 +1,49 @@
+{
+  "lastUpdated": "2025-06-30T00:08:15.666Z",
+  "processingTime": "8.1s",
+  "stats": {
+    "itemsProcessed": 24735,
+    "monstersProcessed": 3000,
+    "prayersProcessed": 29,
+    "equipmentProcessed": 3885,
+    "weaponsProcessed": 957,
+    "iconsProcessed": 0,
+    "totalDownloaded": 55326117,
+    "totalProcessed": 0
+  },
+  "dataSources": [
+    "items",
+    "monsters",
+    "prayers",
+    "itemIcons",
+    "wikiItems"
+  ],
+  "totalDataSize": "Complete OSRS dataset",
+  "checkpoint": {
+    "timestamp": "2025-06-30T00:08:15.147Z",
+    "completed": [
+      "items",
+      "monsters",
+      "prayers"
+    ],
+    "failed": [
+      "itemIcons",
+      "wikiItems"
+    ],
+    "stats": {
+      "itemsProcessed": 24735,
+      "monstersProcessed": 3000,
+      "prayersProcessed": 0,
+      "equipmentProcessed": 3885,
+      "weaponsProcessed": 957,
+      "iconsProcessed": 0,
+      "totalDownloaded": 55326117,
+      "totalProcessed": 0
+    },
+    "currentDataset": "wikiItems",
+    "failedTimestamps": {
+      "itemIcons": "2025-06-30T00:08:10.115Z",
+      "wikiItems": "2025-06-30T00:08:10.242Z"
+    }
+  }
+}
