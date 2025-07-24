@@ -1,4 +1,4 @@
-import OSRSDataService from '../../../services/dataService.js'
+import OSRSDataService from '../../../services/osrsDataService.js'
 
 export default defineEventHandler(async (event) => {
   try {

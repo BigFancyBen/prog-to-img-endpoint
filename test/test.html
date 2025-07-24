@@ -212,6 +212,9 @@
 </style>
 <body>
     <div class="container">
+        <div style="margin-bottom: 20px;">
+            <a href="/" style="color: #007bff; text-decoration: none; font-size: 0.9rem;">← Back to API Documentation</a>
+        </div>
         <h1>🎮 OSRS API & Progress Report Tester</h1>
         
         <div id="serverStatus" class="server-status">
@@ -449,22 +452,18 @@ class OSRSAPITester {
         // Progress Report Tests
         this.createTestCard('Complex Progress Report', async () => {
             const response = await axios.post(`${this.serverUrl}/api/progress-image`, {
-                script_name: "Chaos Druids",
+                script_name: "Basic Test",
                 loot: [
-                    {"id": 203, "name": "Grimy tarromin", "count": 36},
-                    {"id": 199, "name": "Grimy guam leaf", "count": 84},
-                    {"id": 213, "name": "Grimy kwuarm", "count": 5},
-                    {"id": 561, "name": "Nature rune", "count": 4},
-                    {"id": 211, "name": "Grimy avantoe", "count": 20},
-                    {"id": 217, "name": "Grimy dwarf weed", "count": 2},
-                    {"id": 201, "name": "Grimy marrentill", "count": 44},
-                    {"id": 563, "name": "Law rune", "count": 32},
-                    {"id": 995, "name": "Coins", "count": 5420},
-                    {"id": 985, "name": "Tooth half of key", "count": 2},
-                    {"id": 207, "name": "Grimy ranarr weed", "count": 20},
-                    {"id": 215, "name": "Grimy cadantine", "count": 9},
-                    {"id": 9142, "name": "Mithril bolts", "count": 116},
-                    {"id": 13471, "name": "Ensouled chaos druid head", "count": 8}
+                    {"id": 17, "name": "Grail bell", "count": 36},
+                    {"id": 91, "name": "Guam potion (unf)", "count": 84},
+                    {"id": 199, "name": "Grimy guam leaf", "count": 5},
+                    {"id": 201, "name": "Grimy marrentill", "count": 4},
+                    {"id": 203, "name": "Grimy tarromin", "count": 20},
+                    {"id": 205, "name": "Grimy harralander", "count": 2},
+                    {"id": 207, "name": "Grimy ranarr weed", "count": 44},
+                    {"id": 209, "name": "Grimy irit leaf", "count": 32},
+                    {"id": 211, "name": "Grimy avantoe", "count": 116},
+                    {"id": 213, "name": "Grimy kwuarm", "count": 8}
                 ],
                 runtime: 101,
                 xp_earned: [
@@ -480,7 +479,7 @@ class OSRSAPITester {
                 script_name: "Seers Agility",
                 runtime: 60,
                 xp_earned: [{"skill": "agility", "xp": "126,585"}],
-                loot: [{"id": 11849, "name": "Mark of grace", "count": 43}]
+                loot: [{"id": 249, "name": "Guam leaf", "count": 43}]
             });
             return response.data.body ? JSON.parse(response.data.body) : response.data;
         }, 'progressTests');
@@ -496,7 +495,7 @@ class OSRSAPITester {
                     {"skill": "strength", "xp": "42,069"},
                     {"skill": "hitpoints", "xp": "11,022"}
                 ],
-                loot: [{"id": 11849, "name": "Mark of grace", "count": 43}]
+                loot: [{"id": 288, "name": "Goblin mail", "count": 43}]
             });
             return response.data.body ? JSON.parse(response.data.body) : response.data;
         }, 'progressTests');
@@ -525,7 +524,7 @@ class OSRSAPITester {
         }, 'apiTests');
 
         this.createTestCard('Specific Item', async () => {
-            const response = await axios.get(`${this.serverUrl}/osrs/items/995`);
+            const response = await axios.get(`${this.serverUrl}/osrs/items/17`);
             return response.data;
         }, 'apiTests');
 

@@ -1,62 +1,23 @@
 import { readFile } from 'fs/promises'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import OSRSDataService from './osrsDataService.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Cache for local data to improve performance
+// Cache for data to improve performance
 const cache = new Map()
 const CACHE_TTL = 60 * 60 * 1000 // 1 hour
 
-// Load local data once
-let itemsData = null
-let itemsIndex = null
-
 class FileService {
   /**
-   * Load items data from local file
-   * @returns {Promise<Object>} Items data
-   */
-  static async loadItemsData() {
-    if (itemsData) return itemsData
-    
-    try {
-      const dataPath = join(__dirname, '../../data/processed/items.json')
-      const data = await readFile(dataPath, 'utf8')
-      itemsData = JSON.parse(data)
-      return itemsData
-    } catch (error) {
-      console.error('Error loading items data:', error)
-      throw new Error('Failed to load local items data')
-    }
-  }
-
-  /**
-   * Load items index from local file
-   * @returns {Promise<Object>} Items index
-   */
-  static async loadItemsIndex() {
-    if (itemsIndex) return itemsIndex
-    
-    try {
-      const indexPath = join(__dirname, '../../data/processed/indexes.json')
-      const data = await readFile(indexPath, 'utf8')
-      const indexes = JSON.parse(data)
-      itemsIndex = indexes.items || {}
-      return itemsIndex
-    } catch (error) {
-      console.error('Error loading items index:', error)
-      throw new Error('Failed to load local items index')
-    }
-  }
-
-  /**
-   * Get item data from local file by ID
+   * Get item data from database by ID with automatic wiki lookup
    * @param {number} itemId - Item ID
+   * @param {boolean} enableWikiLookup - Enable automatic wiki lookup for missing items
    * @returns {Promise<Object>} Item data
    */
-  static async getItemData(itemId) {
+  static async getItemData(itemId, enableWikiLookup = true) {
     const cacheKey = `item_${itemId}`
     
     // Check cache first
@@ -69,11 +30,38 @@ class FileService {
     }
 
     try {
-      const items = await this.loadItemsData()
-      const itemData = items[itemId.toString()]
+      // Use the database-based OSRSDataService directly
+      const itemData = await OSRSDataService.getItemById(itemId, enableWikiLookup)
       
+      if (itemData && !itemData._missing) {
+        // Cache the successful result
+        cache.set(cacheKey, {
+          data: itemData,
+          timestamp: Date.now()
+        })
+        return itemData
+      }
+
       if (!itemData) {
-        throw new Error(`Item ${itemId} not found in local data`)
+        // Log missing item for future reference but don't throw error
+        console.warn(`⚠️  Item ${itemId} not found in cache or wiki - returning placeholder data`)
+        
+        // Return placeholder item data to prevent breaking image generation
+        const placeholderData = {
+          id: itemId,
+          name: `Unknown Item ${itemId}`,
+          examine: "Item data not available",
+          icon: null,
+          _missing: true
+        }
+        
+        // Cache the placeholder to avoid repeated lookups
+        cache.set(cacheKey, {
+          data: placeholderData,
+          timestamp: Date.now()
+        })
+        
+        return placeholderData
       }
       
       // Cache the result
@@ -90,17 +78,48 @@ class FileService {
   }
 
   /**
-   * Get item icon as base64 from item data
+   * Get item icon as base64 from item data or downloaded icons
    * @param {number} itemId - Item ID
+   * @param {boolean} enableWikiLookup - Enable automatic wiki lookup for missing items
    * @returns {Promise<string>} Base64 encoded image
    */
-  static async getItemIconUrl(itemId) {
+  static async getItemIconUrl(itemId, enableWikiLookup = true) {
     try {
-      // Get the item data which contains the embedded icon
-      const itemData = await this.getItemData(itemId)
+      // First, check if we have a downloaded icon file by item ID (preferred format)
+      const iconPath = join(__dirname, '../../icons/items', `${itemId}.png`)
+      try {
+        const iconBuffer = await readFile(iconPath)
+        const base64Icon = iconBuffer.toString('base64')
+        return `data:image/png;base64,${base64Icon}`
+      } catch (iconError) {
+        // Icon file doesn't exist, continue to item data lookup
+      }
       
-      if (itemData.icon) {
-        return `data:image/png;base64,${itemData.icon}`
+      // Get the item data which may contain local icon filename
+      const itemData = await this.getItemData(itemId, enableWikiLookup)
+      
+      // If this is a missing/placeholder item, return placeholder icon immediately
+      if (itemData._missing) {
+        console.warn(`⚠️  Using placeholder icon for missing item ${itemId}`)
+        const placeholderIcon = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        return `data:image/png;base64,${placeholderIcon}`
+      }
+      
+      // Check if item has a local icon filename (for backward compatibility)
+      if (itemData.icon && typeof itemData.icon === 'string' && itemData.icon.endsWith('.png')) {
+        try {
+          const iconPath2 = join(__dirname, '../../icons/items', itemData.icon)
+          const iconBuffer = await readFile(iconPath2)
+          const base64Icon = iconBuffer.toString('base64')
+          return `data:image/png;base64,${base64Icon}`
+        } catch (iconError) {
+          // Icon file doesn't exist with the filename from itemData
+        }
+      }
+      
+      // Legacy: check if icon is embedded as base64 in the item data
+      if (itemData.icon && itemData.icon.startsWith('data:')) {
+        return itemData.icon
       }
       
       // If no icon in item data, return a transparent placeholder
@@ -116,7 +135,7 @@ class FileService {
   }
 
   /**
-   * Search for items by name using local data
+   * Search for items by name using database
    * @param {string} itemName - Name of the item to search for
    * @returns {Promise<Object>} First matching item data
    */
@@ -133,46 +152,19 @@ class FileService {
     }
 
     try {
-      const itemsIndex = await this.loadItemsIndex()
-      const items = await this.loadItemsData()
-      const queryLower = itemName.toLowerCase()
+      // Use database search functionality
+      const searchResult = await OSRSDataService.searchItemsByName(itemName, 1)
       
-      // First try exact match
-      if (itemsIndex[queryLower]) {
-        const itemId = itemsIndex[queryLower][0] // Get first match
-        const itemData = items[itemId]
+      if (searchResult && searchResult.length > 0) {
+        const item = searchResult[0]
         
-        if (itemData) {
-          const result = { ...itemData, id: parseInt(itemId) }
-          
-          // Cache the result
-          cache.set(cacheKey, {
-            data: result,
-            timestamp: Date.now()
-          })
-          
-          return result
-        }
-      }
-      
-      // Try partial matches
-      for (const [name, ids] of Object.entries(itemsIndex)) {
-        if (name.includes(queryLower)) {
-          const itemId = ids[0] // Get first match
-          const itemData = items[itemId]
-          
-          if (itemData) {
-            const result = { ...itemData, id: parseInt(itemId) }
-            
-            // Cache the result
-            cache.set(cacheKey, {
-              data: result,
-              timestamp: Date.now()
-            })
-            
-            return result
-          }
-        }
+        // Cache the result
+        cache.set(cacheKey, {
+          data: item,
+          timestamp: Date.now()
+        })
+        
+        return item
       }
       
       throw new Error(`Item not found: ${itemName}`)

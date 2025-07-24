@@ -1,4 +1,5 @@
-import OSRSDataService from '../../../services/dataService.js'
+// @ts-ignore
+import OSRSDataService from '../../../services/osrsDataService.js'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -12,10 +13,15 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const item = await OSRSDataService.getItemById(id)
+    // Check cache first, then fallback to wiki lookup by default
+    // Users can disable wiki lookup by setting ?wiki_lookup=false
+    const query = getQuery(event)
+    const enableWikiLookup = query.wiki_lookup !== 'false'
+
+    const item = await OSRSDataService.getItemById(id, enableWikiLookup)
     return item
-  } catch (error) {
-    if (error.message.includes('not found')) {
+  } catch (error: any) {
+    if (error.message && error.message.includes('not found')) {
       throw createError({
         statusCode: 404,
         statusMessage: 'Not Found',
@@ -27,7 +33,7 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal Server Error',
-      data: { error: error.message }
+      data: { error: error.message || 'Unknown error' }
     })
   }
 }) 

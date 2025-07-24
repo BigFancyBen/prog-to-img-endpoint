@@ -1,4 +1,5 @@
-import OSRSDataService from '../../../services/dataService.js'
+// @ts-ignore
+import OSRSDataService from '../../../services/osrsDataService.js'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -14,8 +15,8 @@ export default defineEventHandler(async (event) => {
 
     const weapon = await OSRSDataService.getWeaponById(id)
     return weapon
-  } catch (error) {
-    if (error.message.includes('not found')) {
+  } catch (error: any) {
+    if (error.message && error.message.includes('not found')) {
       throw createError({
         statusCode: 404,
         statusMessage: 'Not Found',
@@ -27,7 +28,7 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal Server Error',
-      data: { error: error.message }
+      data: { error: error.message || 'Unknown error' }
     })
   }
-}) 
+})

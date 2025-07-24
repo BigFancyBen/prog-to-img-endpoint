@@ -9,11 +9,22 @@
     "dev": "nitro dev",
     "start": "node .output/server/index.mjs",
     "preview": "nitro preview",
-    "fetch-data": "node scripts/runDataFetch.js"
+    "fetch-data": "node scripts/runDataFetch.js",
+    "fetch-data-fast": "node scripts/runDataFetch.js",
+    "update-data": "node scripts/runIncrementalUpdate.js",
+    "test-scraper": "node scripts/testScraper.js",
+    "test-icon-scraper": "node scripts/testIconScraper.js",
+    "test-database": "node scripts/testDatabase.js",
+    "test-scraper-sqlite": "node scripts/testScraperSQLite.js",
+    "test-database-api": "node scripts/testDatabaseAPI.js"
   },
   "dependencies": {
+    "axios": "^1.6.2",
+    "better-sqlite3": "^12.2.0",
+    "cheerio": "^1.0.0-rc.12",
     "nitropack": "^2.11.13",
     "sharp": "^0.32.6",
+    "wtf_wikipedia": "^10.1.5",
     "zod": "^3.22.4"
   },
   "devDependencies": {

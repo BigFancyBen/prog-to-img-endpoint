@@ -1,4 +1,4 @@
-import OSRSDataService from '../../../services/dataService.js'
+import OSRSDataService from '../../../services/osrsDataService.js'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -14,15 +14,17 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    if (!['items', 'monsters', 'prayers'].includes(type)) {
-      throw createError({
+    // Currently only items search is supported in the database
+    if (type !== 'items') {
+      return {
+        error: true,
         statusCode: 400,
         statusMessage: 'Bad Request',
-        data: { error: 'Invalid search type. Must be items, monsters, or prayers' }
-      })
+        message: 'Invalid search type. Currently only "items" is supported'
+      }
     }
 
-    const results = await OSRSDataService.searchByName(searchQuery, type)
+    const results = await OSRSDataService.searchItemsByName(searchQuery)
     
     return {
       query: searchQuery,
@@ -34,7 +36,7 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal Server Error',
-      data: { error: error.message }
+      data: { error: error instanceof Error ? error.message : 'Unknown error occurred' }
     })
   }
 }) 
