@@ -446,8 +446,12 @@ export class WikitextParser {
   cleanIconFilename(filename) {
     if (!filename) return null
     
-    // Remove File: prefix if present
-    let cleaned = filename.replace(/^File:/i, '').trim()
+    // URL decode first in case it's encoded
+    let cleaned = decodeURIComponent(filename)
+    
+    // Remove File: prefix if present (both regular and URL-encoded)
+    cleaned = cleaned.replace(/^File:/i, '').trim()
+    cleaned = cleaned.replace(/^File%3A/i, '').trim()
     
     // Remove wiki link brackets if present
     cleaned = cleaned.replace(/\[\[|\]\]/g, '')
@@ -493,3 +497,5 @@ export class WikitextParser {
     }
   }
 }
+
+export default WikitextParser

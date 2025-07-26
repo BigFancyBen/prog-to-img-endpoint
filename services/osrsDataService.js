@@ -1,4 +1,5 @@
 import databaseService from './databaseService.js'
+import WikiLookupService from './wikiLookupService.js'
 import { readFile, access } from 'fs/promises'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
@@ -29,8 +30,8 @@ class OSRSDataService {
         
         try {
           // Use WikiLookupService for dynamic lookup
-          const { default: WikiLookupService } = await import('./wikiLookupService.js')
-          const foundItem = await WikiLookupService.lookupItemById(itemId)
+          const wikiService = new WikiLookupService()
+          const foundItem = await wikiService.lookupItemById(itemId)
           
           if (foundItem) {
             // Convert to database format and save
@@ -65,6 +66,50 @@ class OSRSDataService {
   }
 
   /**
+   * Get item by exact name match
+   */
+  static async getItemByName(name) {
+    try {
+      // Ensure database is initialized
+      if (!databaseService.db) {
+        await databaseService.init()
+      }
+
+      // Search for exact name match (case-insensitive)
+      const item = databaseService.db.prepare(`
+        SELECT * FROM items 
+        WHERE LOWER(name) = LOWER(?)
+        LIMIT 1
+      `).get(name)
+      
+      if (item) {
+        return item
+      }
+      
+      // If not found in database, try wiki lookup
+      console.log(`🔍 Item "${name}" not found in database, attempting wiki lookup...`)
+      
+      try {
+        // Use WikiLookupService for dynamic lookup
+        const wikiService = new WikiLookupService()
+        const foundItem = await wikiService.lookupItemByName(name)
+        
+        if (foundItem) {
+          console.log(`✅ Found item "${name}" via wiki lookup`)
+          return foundItem
+        }
+      } catch (error) {
+        console.error(`❌ Wiki lookup failed for item "${name}":`, error.message)
+      }
+      
+      return null
+    } catch (error) {
+      console.error(`Error fetching item by name "${name}":`, error)
+      return null
+    }
+  }
+
+  /**
    * Search items by name
    */
   static async searchItemsByName(query, limit = 10) {
@@ -74,15 +119,16 @@ class OSRSDataService {
         await databaseService.init()
       }
 
-      const items = databaseService.searchItems(query, limit)
+      const items = await databaseService.searchItemsByNameOnly(query, limit)
+      console.log(`🔍 Database search for "${query}" returned ${items.length} items`)
       
       if (items.length === 0) {
         console.log(`🔍 No items found for "${query}" in database, attempting wiki lookup...`)
         
         try {
           // Use WikiLookupService for dynamic lookup
-          const { default: WikiLookupService } = await import('./wikiLookupService.js')
-          const foundItem = await WikiLookupService.lookupItemByName(query)
+          const wikiService = new WikiLookupService()
+          const foundItem = await wikiService.lookupItemByName(query)
           
           if (foundItem) {
             // Convert to database format and save
@@ -516,6 +562,7 @@ class OSRSDataService {
       throw error
     }
   }
+
 }
 
 export default OSRSDataService

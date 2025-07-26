@@ -343,6 +343,38 @@ class DatabaseService {
   }
 
   /**
+   * Search items by name only
+   */
+  searchItemsByNameOnly(query, limit = 10) {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+    
+    const stmt = this.db.prepare(`
+      SELECT i.*, 
+             e.attack_stab, e.attack_slash, e.attack_crush, e.attack_magic, e.attack_ranged,
+             e.defence_stab, e.defence_slash, e.defence_crush, e.defence_magic, e.defence_ranged,
+             e.melee_strength, e.ranged_strength, e.magic_damage, e.prayer as equipment_prayer,
+             e.slot, e.requirements,
+             w.attack_speed, w.weapon_type, w.stab as weapon_stab, w.slash as weapon_slash,
+             w.crush as weapon_crush, w.magic as weapon_magic, w.ranged as weapon_ranged
+      FROM items i
+      LEFT JOIN equipment_stats e ON i.id = e.item_id
+      LEFT JOIN weapon_stats w ON i.id = w.item_id
+      WHERE i.name LIKE ? COLLATE NOCASE
+      ORDER BY 
+        CASE WHEN LOWER(i.name) = LOWER(?) THEN 0 ELSE 1 END,
+        i.name
+      LIMIT ?
+    `)
+
+    const searchPattern = `%${query}%`
+    const rows = stmt.all(searchPattern, query, limit)
+    
+    return rows.map(row => this.formatItemFromRow(row))
+  }
+
+  /**
    * Get all items
    */
   getAllItems() {
@@ -463,6 +495,7 @@ class DatabaseService {
       this.db = null
     }
   }
+
 }
 
 // Create singleton instance

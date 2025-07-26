@@ -1,6 +1,7 @@
 import { WikiApiClient } from '../scripts/wiki/wikiApiClient.js'
 import { WikitextParser } from '../scripts/wiki/wikitextParser.js'
 import { InfoboxCleaner } from '../scripts/wiki/infoboxCleaner.js'
+import databaseService from './databaseService.js'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { createWriteStream, promises as fs } from 'fs'
@@ -16,6 +17,16 @@ const ICONS_DIR = join(__dirname, '../icons/items')
 class WikiLookupService {
   constructor() {
     this.wikiClient = new WikiApiClient()
+    this.databaseService = databaseService
+  }
+
+  /**
+   * Ensure database is initialized
+   */
+  async ensureDatabase() {
+    if (!this.databaseService.db) {
+      await this.databaseService.init()
+    }
   }
 
   /**
@@ -35,9 +46,19 @@ class WikiLookupService {
 
       // Try each search result until we find a valid item
       for (const pageTitle of searchResults) {
-        const itemData = await this.extractItemDataFromPage(pageTitle, itemId)
+        const itemVersions = await this.extractAllVersionsFromPage(pageTitle)
+        
+        // Look for the specific ID we want
+        const itemData = itemVersions.find(item => item.id === parseInt(itemId))
+        
         if (itemData) {
           console.log(`✅ Found item: ${itemData.name} (ID: ${itemId})`)
+          
+          // Save all versions to the database
+          for (const version of itemVersions) {
+            await this.addItemToDatabase(version)
+          }
+          
           return itemData
         }
       }
@@ -57,21 +78,70 @@ class WikiLookupService {
     try {
       console.log(`🔍 Looking up item "${itemName}" on OSRS Wiki...`)
       
-      // Try direct page lookup first
-      let itemData = await this.extractItemDataFromPage(itemName)
-      if (itemData) {
-        console.log(`✅ Found item: ${itemData.name} (ID: ${itemData.id})`)
-        return itemData
-      }
-
-      // If direct lookup fails, try search
-      const searchResults = await this.searchForItemName(itemName)
+      // Try different variations of the name to handle special characters
+      const searchVariations = [
+        itemName,
+        itemName.replace(/'/g, "'"), // Try straight apostrophe
+        itemName.replace(/'/g, ""), // Remove apostrophes
+        itemName.replace(/'/g, "%27"), // URL encoded apostrophe
+        itemName.replace(/'/g, "_"), // Replace apostrophe with underscore (wiki format)
+        itemName.replace(/ /g, "_"), // Replace spaces with underscores (wiki format)
+        itemName.replace(/'/g, "_").replace(/ /g, "_"), // Both replacements
+      ]
       
-      for (const pageTitle of searchResults) {
-        itemData = await this.extractItemDataFromPage(pageTitle)
-        if (itemData && itemData.name.toLowerCase().includes(itemName.toLowerCase())) {
-          console.log(`✅ Found item: ${itemData.name} (ID: ${itemData.id})`)
-          return itemData
+      for (const searchName of searchVariations) {
+        console.log(`🔍 Trying search variation: "${searchName}"`)
+        
+        // Try direct page lookup first
+        const itemVersions = await this.extractAllVersionsFromPage(searchName)
+        if (itemVersions.length > 0) {
+          // Find a version that matches the search name
+          let bestMatch = itemVersions.find(item => 
+            item.name.toLowerCase() === itemName.toLowerCase()
+          )
+          
+          if (!bestMatch) {
+            // If no exact match, find any version that contains the search term
+            bestMatch = itemVersions.find(item => 
+              item.name.toLowerCase().includes(itemName.toLowerCase())
+            )
+          }
+          
+          if (!bestMatch && itemVersions.length > 0) {
+            // If still no match, use the first version
+            bestMatch = itemVersions[0]
+          }
+          
+          if (bestMatch) {
+            console.log(`✅ Found item: ${bestMatch.name} (ID: ${bestMatch.id}) with ${itemVersions.length} versions`)
+            
+            // Save all versions to the database
+            for (const version of itemVersions) {
+              await this.addItemToDatabase(version)
+            }
+            
+            return bestMatch
+          }
+        }
+
+        // If direct lookup fails, try search
+        const searchResults = await this.searchForItemName(searchName)
+        
+        for (const pageTitle of searchResults) {
+          const itemVersions = await this.extractAllVersionsFromPage(pageTitle)
+          
+          for (const itemData of itemVersions) {
+            if (itemData.name.toLowerCase().includes(itemName.toLowerCase())) {
+              console.log(`✅ Found item: ${itemData.name} (ID: ${itemData.id}) with ${itemVersions.length} versions`)
+              
+              // Save all versions to the database
+              for (const version of itemVersions) {
+                await this.addItemToDatabase(version)
+              }
+              
+              return itemData
+            }
+          }
         }
       }
 
@@ -190,7 +260,8 @@ class WikiLookupService {
         examine: InfoboxCleaner.clean(parser.extractValue('examine'), 'examine'),
         wiki_name: pageTitle,
         wiki_url: `https://oldschool.runescape.wiki/w/${encodeURIComponent(pageTitle)}`,
-        icon: localIconPath, // Store local filename instead of URL
+        icon_path: localIconPath || null,
+        icon_url: null,
         members: InfoboxCleaner.clean(parser.extractValue('members'), 'boolean'),
         tradeable: InfoboxCleaner.clean(parser.extractValue('tradeable'), 'boolean'),
         tradeable_on_ge: InfoboxCleaner.clean(parser.extractValue('exchangeable'), 'boolean'),
@@ -261,10 +332,254 @@ class WikiLookupService {
   }
 
   /**
+   * Extract all versions from a versioned item page
+   */
+  async extractAllVersionsFromPage(pageTitle) {
+    try {
+      const wikitext = await this.wikiClient.getPageWikitext(pageTitle)
+      if (!wikitext) return []
+
+      const parser = new WikitextParser(wikitext)
+      
+      // Try to find any infobox with item-like properties
+      let hasInfobox = false
+      
+      if (parser.extractInfobox('infobox item') || 
+          parser.extractInfobox('infobox pet') ||
+          parser.extractInfobox('item') ||
+          parser.extractInfobox('pet')) {
+        hasInfobox = true
+      }
+      
+      // If no specific infobox found, try to find any infobox with item-like properties
+      if (!hasInfobox) {
+        const doc = parser.doc
+        if (doc) {
+          const infoboxes = doc.infoboxes()
+          for (const infobox of infoboxes) {
+            const data = infobox.data || {}
+            if (data.id || data.name || data.examine || data.value) {
+              parser.template = parser.processInfobox(infobox)
+              hasInfobox = true
+              break
+            }
+          }
+        }
+      }
+
+      if (!hasInfobox || !parser.template) return []
+
+      // Check if it's versioned
+      parser.determineVersioning()
+      
+      if (!parser.isVersioned) {
+        // Single version item
+        const id = parser.extractId()
+        if (!id) return []
+        
+        const itemData = await this.extractSingleItemData(parser, pageTitle, id, null)
+        return itemData ? [itemData] : []
+      }
+
+      // Extract all versions
+      const versions = []
+      const template = parser.template
+      
+      // Find all version numbers
+      const versionNumbers = new Set()
+      for (const key in template) {
+        const match = key.match(/^(id|name|version)(\d+)$/i)
+        if (match) {
+          versionNumbers.add(parseInt(match[2]))
+        }
+      }
+      
+      console.log(`🔍 Found ${versionNumbers.size} versions for ${pageTitle}`)
+      
+      // Extract data for each version
+      for (const versionNum of Array.from(versionNumbers).sort()) {
+        const id = this.extractVersionedValue(template, 'id', versionNum)
+        if (id) {
+          const itemData = await this.extractSingleItemData(parser, pageTitle, id, versionNum)
+          if (itemData) {
+            versions.push(itemData)
+          }
+        }
+      }
+      
+      return versions
+    } catch (error) {
+      console.error(`Error extracting versions from ${pageTitle}:`, error.message)
+      return []
+    }
+  }
+
+  /**
+   * Extract value for a specific version (e.g., name1, name2)
+   */
+  extractVersionedValue(template, field, versionNum) {
+    const versionedKey = `${field}${versionNum}`
+    let value = null
+    
+    if (template[versionedKey]) {
+      value = this.cleanValue(template[versionedKey])
+    } else if (template[field]) {
+      // Try without version number as fallback
+      value = this.cleanValue(template[field])
+    }
+    
+    // Special handling for image fields - clean the wiki markup
+    if (value && field === 'image') {
+      // If it's a File: link in wiki markup, extract just the filename
+      const fileMatch = value.match(/\[\[File:([^\]]+)\]\]/)
+      if (fileMatch) {
+        // Extract filename and remove .png extension
+        const filename = fileMatch[1].replace(/\.png$/i, '')
+        return filename
+      }
+    }
+    
+    return value
+  }
+
+  /**
+   * Clean value (same as WikitextParser cleanValue)
+   */
+  cleanValue(value) {
+    if (!value) return ''
+    
+    // If it's a wtf_wikipedia object, try to get text
+    if (value && typeof value === 'object') {
+      if (value.text && typeof value.text === 'function') {
+        return value.text().trim()
+      } else if (value.toString) {
+        return value.toString().trim()
+      }
+      return String(value).trim()
+    }
+    
+    // Clean string values
+    return String(value)
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
+  /**
+   * Extract item data for a single version
+   */
+  async extractSingleItemData(parser, pageTitle, id, versionNum) {
+    try {
+      const template = parser.template
+      
+      // For versioned items, try to get version-specific values first
+      const getName = (field) => {
+        if (versionNum) {
+          const versionedValue = this.extractVersionedValue(template, field, versionNum)
+          if (versionedValue) return versionedValue
+        }
+        return parser.extractValue(field)
+      }
+      
+      // Extract item data
+      const iconFilename = versionNum ? 
+        this.extractVersionedValue(template, 'image', versionNum) || parser.extractIcon() :
+        parser.extractIcon()
+      
+      let localIconPath = null
+      
+      if (iconFilename) {
+        const iconUrl = parser.getIconUrl(iconFilename)
+        if (iconUrl) {
+          // Download and cache the icon locally using item ID as filename
+          const iconFileName = `${id}.png`
+          localIconPath = await this.downloadIcon(iconUrl, iconFileName)
+        }
+      }
+
+      const itemData = {
+        id: parseInt(id),
+        name: InfoboxCleaner.clean(getName('name'), 'string') || 
+              (versionNum ? `${pageTitle} ${versionNum}` : pageTitle),
+        examine: InfoboxCleaner.clean(getName('examine'), 'examine'),
+        wiki_name: pageTitle,
+        wiki_url: `https://oldschool.runescape.wiki/w/${encodeURIComponent(pageTitle)}`,
+        icon_path: localIconPath || null,
+        icon_url: null,
+        members: InfoboxCleaner.clean(getName('members'), 'boolean'),
+        tradeable: InfoboxCleaner.clean(getName('tradeable'), 'boolean'),
+        tradeable_on_ge: InfoboxCleaner.clean(getName('exchangeable'), 'boolean'),
+        stackable: InfoboxCleaner.clean(getName('stackable'), 'boolean'),
+        noted: InfoboxCleaner.clean(getName('noted'), 'boolean'),
+        noteable: InfoboxCleaner.clean(getName('noteable'), 'boolean'),
+        weight: InfoboxCleaner.clean(getName('weight'), 'number'),
+        buy_limit: InfoboxCleaner.clean(getName('buylimit'), 'number'),
+        quest_item: InfoboxCleaner.clean(getName('quest'), 'boolean'),
+        release_date: InfoboxCleaner.clean(getName('release'), 'date'),
+        duplicate: false,
+        equipable: false,
+        equipable_by_player: false,
+        equipable_weapon: false,
+        cost: InfoboxCleaner.clean(getName('cost'), 'number'),
+        lowalch: InfoboxCleaner.clean(getName('low'), 'number'),
+        highalch: InfoboxCleaner.clean(getName('high'), 'number'),
+        destruction: InfoboxCleaner.clean(getName('destroy'), 'string'),
+        last_updated: new Date().toISOString(),
+        _source: 'wiki_lookup',
+        _version: versionNum || 1
+      }
+
+      // Check if item is equipable
+      const slot = InfoboxCleaner.clean(getName('slot'), 'string')
+      if (slot) {
+        itemData.equipable = true
+        itemData.equipable_by_player = true
+        itemData.equipment = {
+          attack_stab: InfoboxCleaner.clean(getName('astab'), 'stats'),
+          attack_slash: InfoboxCleaner.clean(getName('aslash'), 'stats'),
+          attack_crush: InfoboxCleaner.clean(getName('acrush'), 'stats'),
+          attack_magic: InfoboxCleaner.clean(getName('amagic'), 'stats'),
+          attack_ranged: InfoboxCleaner.clean(getName('arange'), 'stats'),
+          defence_stab: InfoboxCleaner.clean(getName('dstab'), 'stats'),
+          defence_slash: InfoboxCleaner.clean(getName('dslash'), 'stats'),
+          defence_crush: InfoboxCleaner.clean(getName('dcrush'), 'stats'),
+          defence_magic: InfoboxCleaner.clean(getName('dmagic'), 'stats'),
+          defence_ranged: InfoboxCleaner.clean(getName('drange'), 'stats'),
+          melee_strength: InfoboxCleaner.clean(getName('str'), 'stats'),
+          ranged_strength: InfoboxCleaner.clean(getName('rstr'), 'stats'),
+          magic_damage: InfoboxCleaner.clean(getName('mdmg'), 'stats'),
+          prayer: InfoboxCleaner.clean(getName('prayer'), 'stats'),
+          slot: slot,
+          requirements: InfoboxCleaner.clean(getName('reqs'), 'requirements')
+        }
+        
+        // Check if it's a weapon
+        const attackSpeed = getName('aspeed')
+        if (attackSpeed) {
+          itemData.equipable_weapon = true
+          itemData.weapon = {
+            attack_speed: InfoboxCleaner.clean(attackSpeed, 'number'),
+            weapon_type: InfoboxCleaner.clean(getName('wtype'), 'string'),
+            stab: itemData.equipment.attack_stab,
+            slash: itemData.equipment.attack_slash,
+            crush: itemData.equipment.attack_crush,
+            magic: itemData.equipment.attack_magic,
+            ranged: itemData.equipment.attack_ranged
+          }
+        }
+      }
+
+      return itemData
+    } catch (error) {
+      console.error(`Error extracting single item data:`, error.message)
+      return null
+    }
+  }
+
+  /**
    * Download icon for a newly found item
    */
   /**
-   * Download and cache an icon file locally
+   * Download and cache an icon file locally with MediaWiki URL format handling
    */
   async downloadIcon(iconUrl, fileName) {
     if (!iconUrl || !fileName) return null
@@ -285,20 +600,44 @@ class WikiLookupService {
       
       console.log(`📥 Downloading icon: ${fileName}`)
       
-      const success = await this.downloadIconFromUrl(iconUrl, iconPath)
-      if (success) {
-        return fileName // Return local filename
-      } else {
-        // Try alternative formats
-        const altFileName = fileName.replace(/\.png$/, '.png').replace(/ /g, '_')
-        const altUrl = `https://oldschool.runescape.wiki/images/${altFileName}`
-        const altSuccess = await this.downloadIconFromUrl(altUrl, iconPath)
-        if (altSuccess) {
+      // Extract base name from iconUrl for MediaWiki format variations
+      let urlBaseName = iconUrl.includes('/images/') ? 
+        iconUrl.split('/images/')[1].replace(/\.(png|gif|jpg|jpeg)$/i, '') : 
+        fileName.replace(/\.(png|gif|jpg|jpeg)$/i, '')
+      
+      // Decode URL encoding to get clean filename
+      urlBaseName = decodeURIComponent(urlBaseName)
+      
+      // Try multiple MediaWiki naming conventions
+      const urlVariations = [
+        `https://oldschool.runescape.wiki/images/${urlBaseName.replace(/ /g, '_')}.png`, // Underscores first (OSRS Wiki standard)
+        iconUrl, // Original URL
+        `https://oldschool.runescape.wiki/images/${urlBaseName}.png`,
+        `https://oldschool.runescape.wiki/images/${urlBaseName.replace(/ /g, '%20')}.png`,
+        `https://oldschool.runescape.wiki/images/${encodeURIComponent(urlBaseName)}.png`
+      ]
+      
+      // Remove duplicates while preserving order
+      const uniqueUrls = [...new Set(urlVariations)]
+      
+      for (let i = 0; i < uniqueUrls.length; i++) {
+        const tryUrl = uniqueUrls[i]
+        console.log(`  Trying URL ${i + 1}/${uniqueUrls.length}: ${tryUrl}`)
+        
+        const success = await this.downloadIconFromUrl(tryUrl, iconPath)
+        if (success) {
+          console.log(`  ✅ Success with URL format: ${tryUrl}`)
           return fileName
+        }
+        
+        // Small delay between attempts
+        if (i < uniqueUrls.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000))
         }
       }
       
-      return null // Download failed
+      console.log(`  ❌ All URL formats failed for: ${fileName}`)
+      return null // All download attempts failed
     } catch (error) {
       console.warn(`⚠️  Error downloading icon ${fileName}:`, error.message)
       return null
@@ -312,65 +651,104 @@ class WikiLookupService {
     return new Promise((resolve) => {
       const file = createWriteStream(iconPath)
       
-      const request = https.get(url, (response) => {
+      // Parse URL to get proper headers
+      const urlObj = new URL(url)
+      const options = {
+        hostname: urlObj.hostname,
+        path: urlObj.pathname + urlObj.search,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Sec-Fetch-Dest': 'image',
+          'Sec-Fetch-Mode': 'no-cors',
+          'Sec-Fetch-Site': 'cross-site',
+          'Referer': 'https://oldschool.runescape.wiki/'
+        }
+      }
+      
+      const request = https.get(options, (response) => {
         if (response.statusCode === 200) {
           response.pipe(file)
           file.on('finish', () => {
             file.close()
+            console.log(`✅ Successfully downloaded icon: ${url}`)
             resolve(true)
           })
         } else if (response.statusCode === 404) {
           file.close()
+          console.warn(`⚠️  Icon not found (404): ${url}`)
           resolve(false)
         } else {
           file.close()
-          console.warn(`⚠️  Failed to download icon: ${response.statusCode}`)
+          console.warn(`⚠️  Failed to download icon: ${response.statusCode} - ${url}`)
           resolve(false)
         }
       })
       
       request.on('error', (error) => {
         file.close()
-        console.warn(`⚠️  Error downloading icon:`, error.message)
+        console.warn(`⚠️  Error downloading icon from ${url}:`, error.message)
         resolve(false)
       })
       
-      request.setTimeout(10000, () => {
+      request.setTimeout(15000, () => {
         request.destroy()
         file.close()
-        console.warn(`⚠️  Timeout downloading icon`)
+        console.warn(`⚠️  Timeout downloading icon from ${url}`)
         resolve(false)
       })
     })
   }
 
   /**
-   * Add a newly found item to the cache
+   * Add a newly found item to the database
    */
-  async addItemToCache(itemData) {
+  async addItemToDatabase(itemData) {
     try {
-      const DATA_DIR = join(process.cwd(), 'data/processed')
-      const itemsFile = join(DATA_DIR, 'items.json')
+      await this.ensureDatabase()
       
-      // Load existing items
-      let items = {}
-      try {
-        const rawData = await readFile(itemsFile, 'utf8')
-        items = JSON.parse(rawData)
-      } catch (error) {
-        console.warn('Could not load existing items.json, starting fresh')
+      // Convert item data to match database format
+      const dbItemData = {
+        id: itemData.id,
+        name: itemData.name,
+        examine: itemData.examine,
+        wiki_name: itemData.wiki_name,
+        wiki_url: itemData.wiki_url,
+        icon_path: itemData.icon_path,
+        icon_url: itemData.icon_url,
+        members: itemData.members,
+        tradeable: itemData.tradeable,
+        tradeable_on_ge: itemData.tradeable_on_ge,
+        stackable: itemData.stackable,
+        noted: itemData.noted,
+        noteable: itemData.noteable,
+        weight: itemData.weight || 0,
+        buy_limit: itemData.buy_limit || 0,
+        quest_item: itemData.quest_item,
+        release_date: itemData.release_date,
+        duplicate: itemData.duplicate || false,
+        equipable: itemData.equipable || false,
+        equipable_by_player: itemData.equipable_by_player || false,
+        equipable_weapon: itemData.equipable_weapon || false,
+        cost: itemData.cost || 0,
+        lowalch: itemData.lowalch || 0,
+        highalch: itemData.highalch || 0,
+        destruction: itemData.destruction,
+        last_updated: new Date().toISOString()
       }
       
-      // Add the new item
-      items[itemData.id.toString()] = itemData
+      // Insert the item into the database
+      this.databaseService.insertItem(dbItemData)
       
-      // Write back to file
-      await writeFile(itemsFile, JSON.stringify(items, null, 2))
-      console.log(`💾 Added item ${itemData.name} (ID: ${itemData.id}) to cache`)
+      console.log(`💾 Added item ${itemData.name} (ID: ${itemData.id}) to database`)
       
       return true
     } catch (error) {
-      console.error(`❌ Error adding item to cache:`, error.message)
+      console.error(`❌ Error adding item to database:`, error.message)
       return false
     }
   }

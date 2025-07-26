@@ -1,25 +1,26 @@
 #!/usr/bin/env node
 
 import OSRSWikiScraperOptimized from './wikiScraperOptimized.js'
+import SmartItemFetcher from './smartItemFetcher.js'
 
 async function main() {
-  console.log('🎮 OSRS Data Fetcher (Optimized)')
-  console.log('=================================')
+  console.log('🎮 OSRS Data Fetcher (Complete Coverage)')
+  console.log('========================================')
   console.log('')
-  console.log('This script will download and process OSRS data directly from the wiki.')
+  console.log('This script will download and process ALL OSRS data directly from the wiki.')
   console.log('The wiki is used as the single source of truth for all data.')
   console.log('')
   console.log('Features:')
-  console.log('✅ Concurrent processing (2 pages at once)')
+  console.log('✅ Phase 1: Category-based scraping (existing items)')
+  console.log('✅ Phase 2: Gap-filling scan (missing IDs between min/max)')
+  console.log('✅ Rate limit handling with exponential backoff')
   console.log('✅ Streaming writes (no data loss on interruption)')
-  console.log('✅ Resume capability (checkpoint system)')
   console.log('✅ Real-time progress tracking')
   console.log('✅ Structured data extraction from infoboxes')
-  console.log('✅ Comprehensive item and monster databases')
   console.log('✅ Icon downloading and caching')
   console.log('')
-  console.log('Note: This process respects wiki rate limits.')
-  console.log('Estimated time: 5-15 minutes depending on your connection')
+  console.log('Note: This process aggressively respects wiki rate limits.')
+  console.log('Estimated time: 5-15 minutes for complete coverage')
   console.log('')
   
   // Check if user wants to continue
@@ -48,10 +49,14 @@ async function main() {
   }
   
   console.log('')
-  console.log('🚀 Starting optimized wiki data scraping...')
+  console.log('🚀 Starting comprehensive wiki data scraping...')
   console.log('')
   
   try {
+    // Phase 1: Category-based scraping (fast, gets most items)
+    console.log('📋 Phase 1: Category-based scraping')
+    console.log('===================================')
+    
     const scraper = new OSRSWikiScraperOptimized({
       concurrency: 2,     // Process 2 pages simultaneously (reduced for rate limits)
       batchSize: 25       // Save checkpoint every 25 items
@@ -60,8 +65,20 @@ async function main() {
     await scraper.run()
     
     console.log('')
-    console.log('🎉 Data scraping completed successfully!')
-    console.log('� Data stored in SQLite database: data/osrs.db')
+    console.log('✅ Phase 1 completed! Now starting gap-filling scan...')
+    console.log('')
+    
+    // Phase 2: Gap-filling scan (efficient, fills missing IDs between min/max)
+    console.log('🔍 Phase 2: Gap-filling scan')
+    console.log('============================')
+    
+    const smartFetcher = new SmartItemFetcher()
+    await smartFetcher.run()
+    
+    console.log('')
+    console.log('🎉 Complete data scraping finished successfully!')
+    console.log('📊 Database now has no gaps between lowest and highest IDs')
+    console.log('💾 Data stored in SQLite database: data/osrs.db')
     console.log('📁 Icons cached in: icons/items/')
     console.log('🌐 You can now start your server with: npm run dev')
     

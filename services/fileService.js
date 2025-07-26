@@ -167,6 +167,20 @@ class FileService {
         return item
       }
       
+      // If database search failed, try direct name lookup which includes WikiLookupService fallback
+      console.log(`🔍 Database search failed for "${itemName}", trying exact name lookup...`)
+      const exactItem = await OSRSDataService.getItemByName(itemName)
+      
+      if (exactItem) {
+        // Cache the result
+        cache.set(cacheKey, {
+          data: exactItem,
+          timestamp: Date.now()
+        })
+        
+        return exactItem
+      }
+      
       throw new Error(`Item not found: ${itemName}`)
     } catch (error) {
       console.error(`Error searching for item ${itemName}:`, error)
