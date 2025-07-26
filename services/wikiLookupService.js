@@ -2,14 +2,7 @@ import { WikiApiClient } from '../scripts/wiki/wikiApiClient.js'
 import { WikitextParser } from '../scripts/wiki/wikitextParser.js'
 import { InfoboxCleaner } from '../scripts/wiki/infoboxCleaner.js'
 import databaseService from './databaseService.js'
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
-import { createWriteStream, promises as fs } from 'fs'
 import https from 'https'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const ICONS_DIR = join(__dirname, '../icons/items')
 
 /**
  * Service for looking up missing items/monsters on OSRS Wiki
@@ -248,9 +241,9 @@ class WikiLookupService {
       if (iconFilename) {
         const iconUrl = parser.getIconUrl(iconFilename)
         if (iconUrl) {
-          // Download and cache the icon locally using item ID as filename
+          // Download and cache the icon in database using item ID as filename
           const iconFileName = `${id}.png`
-          localIconPath = await this.downloadIcon(iconUrl, iconFileName)
+          localIconPath = await this.downloadIcon(iconUrl, iconFileName, id)
         }
       }
 
@@ -490,9 +483,9 @@ class WikiLookupService {
       if (iconFilename) {
         const iconUrl = parser.getIconUrl(iconFilename)
         if (iconUrl) {
-          // Download and cache the icon locally using item ID as filename
+          // Download and cache the icon in database using item ID as filename
           const iconFileName = `${id}.png`
-          localIconPath = await this.downloadIcon(iconUrl, iconFileName)
+          localIconPath = await this.downloadIcon(iconUrl, iconFileName, id)
         }
       }
 
@@ -579,26 +572,18 @@ class WikiLookupService {
    * Download icon for a newly found item
    */
   /**
-   * Download and cache an icon file locally with MediaWiki URL format handling
+   * Download and cache an icon file in database with MediaWiki URL format handling
    */
-  async downloadIcon(iconUrl, fileName) {
-    if (!iconUrl || !fileName) return null
+  async downloadIcon(iconUrl, fileName, itemId) {
+    if (!iconUrl || !fileName || !itemId) return null
     
     try {
-      // Ensure icons directory exists
-      await fs.mkdir(ICONS_DIR, { recursive: true })
-      
-      const iconPath = join(ICONS_DIR, fileName)
-      
-      // Check if icon already exists
-      try {
-        await fs.access(iconPath)
-        return fileName // Icon already exists, return local filename
-      } catch {
-        // Icon doesn't exist, download it
+      // Check if icon already exists in database
+      if (await this.databaseService.hasIconData(itemId)) {
+        return fileName // Icon already exists in database
       }
       
-      console.log(`📥 Downloading icon: ${fileName}`)
+      console.log(`📥 Downloading icon: ${fileName} for item ${itemId}`)
       
       // Extract base name from iconUrl for MediaWiki format variations
       let urlBaseName = iconUrl.includes('/images/') ? 
@@ -624,10 +609,18 @@ class WikiLookupService {
         const tryUrl = uniqueUrls[i]
         console.log(`  Trying URL ${i + 1}/${uniqueUrls.length}: ${tryUrl}`)
         
-        const success = await this.downloadIconFromUrl(tryUrl, iconPath)
-        if (success) {
+        const iconBuffer = await this.downloadIconFromUrl(tryUrl)
+        if (iconBuffer) {
           console.log(`  ✅ Success with URL format: ${tryUrl}`)
-          return fileName
+          
+          // Store icon in database
+          const success = await this.databaseService.storeIconData(itemId, iconBuffer)
+          if (success) {
+            console.log(`  ✅ Icon stored in database for item ${itemId}`)
+            return fileName
+          } else {
+            console.warn(`  ⚠️  Failed to store icon in database for item ${itemId}`)
+          }
         }
         
         // Small delay between attempts
@@ -645,12 +638,10 @@ class WikiLookupService {
   }
 
   /**
-   * Download icon from URL to local path
+   * Download icon from URL and return buffer
    */
-  async downloadIconFromUrl(url, iconPath) {
+  async downloadIconFromUrl(url) {
     return new Promise((resolve) => {
-      const file = createWriteStream(iconPath)
-      
       // Parse URL to get proper headers
       const urlObj = new URL(url)
       const options = {
@@ -672,34 +663,35 @@ class WikiLookupService {
       
       const request = https.get(options, (response) => {
         if (response.statusCode === 200) {
-          response.pipe(file)
-          file.on('finish', () => {
-            file.close()
-            console.log(`✅ Successfully downloaded icon: ${url}`)
-            resolve(true)
+          const chunks = []
+          
+          response.on('data', (chunk) => {
+            chunks.push(chunk)
+          })
+          
+          response.on('end', () => {
+            const buffer = Buffer.concat(chunks)
+            console.log(`✅ Successfully downloaded icon: ${url} (${buffer.length} bytes)`)
+            resolve(buffer)
           })
         } else if (response.statusCode === 404) {
-          file.close()
           console.warn(`⚠️  Icon not found (404): ${url}`)
-          resolve(false)
+          resolve(null)
         } else {
-          file.close()
           console.warn(`⚠️  Failed to download icon: ${response.statusCode} - ${url}`)
-          resolve(false)
+          resolve(null)
         }
       })
       
       request.on('error', (error) => {
-        file.close()
         console.warn(`⚠️  Error downloading icon from ${url}:`, error.message)
-        resolve(false)
+        resolve(null)
       })
       
       request.setTimeout(15000, () => {
         request.destroy()
-        file.close()
         console.warn(`⚠️  Timeout downloading icon from ${url}`)
-        resolve(false)
+        resolve(null)
       })
     })
   }
