@@ -59,6 +59,7 @@ class DatabaseService {
         wiki_url TEXT,
         icon_path TEXT,
         icon_url TEXT,
+        icon_data BLOB,
         members BOOLEAN,
         tradeable BOOLEAN,
         tradeable_on_ge BOOLEAN,
@@ -81,6 +82,13 @@ class DatabaseService {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `)
+    
+    // Add icon_data column to existing tables if it doesn't exist
+    try {
+      this.db.exec(`ALTER TABLE items ADD COLUMN icon_data BLOB`)
+    } catch (error) {
+      // Column already exists, ignore error
+    }
 
     // Equipment stats table (for equipable items)
     this.db.exec(`
@@ -468,10 +476,82 @@ class DatabaseService {
   }
 
   /**
-   * Get database statistics
+   * Store icon data as BLOB in database
+   */
+  storeIconData(itemId, iconBuffer) {
+    try {
+      const stmt = this.db.prepare(`
+        UPDATE items 
+        SET icon_data = ? 
+        WHERE id = ?
+      `)
+      const result = stmt.run(iconBuffer, itemId)
+      return result.changes > 0
+    } catch (error) {
+      console.error(`Error storing icon data for item ${itemId}:`, error)
+      return false
+    }
+  }
+
+  /**
+   * Get icon data from database
+   */
+  getIconData(itemId) {
+    try {
+      const stmt = this.db.prepare(`
+        SELECT icon_data 
+        FROM items 
+        WHERE id = ? AND icon_data IS NOT NULL
+      `)
+      const row = stmt.get(itemId)
+      return row ? row.icon_data : null
+    } catch (error) {
+      console.error(`Error getting icon data for item ${itemId}:`, error)
+      return null
+    }
+  }
+
+  /**
+   * Check if item has icon data stored
+   */
+  hasIconData(itemId) {
+    try {
+      const stmt = this.db.prepare(`
+        SELECT 1 
+        FROM items 
+        WHERE id = ? AND icon_data IS NOT NULL
+      `)
+      return stmt.get(itemId) !== undefined
+    } catch (error) {
+      console.error(`Error checking icon data for item ${itemId}:`, error)
+      return false
+    }
+  }
+
+  /**
+   * Get all items with missing icon data
+   */
+  getItemsWithoutIcons() {
+    try {
+      const stmt = this.db.prepare(`
+        SELECT id, name, icon_path, icon_url
+        FROM items 
+        WHERE icon_data IS NULL
+        ORDER BY id
+      `)
+      return stmt.all()
+    } catch (error) {
+      console.error('Error getting items without icons:', error)
+      return []
+    }
+  }
+
+  /**
+   * Get database statistics including icon data
    */
   getStats() {
     const itemCount = this.db.prepare('SELECT COUNT(*) as count FROM items').get().count
+    const itemsWithIcons = this.db.prepare('SELECT COUNT(*) as count FROM items WHERE icon_data IS NOT NULL').get().count
     const equipmentCount = this.db.prepare('SELECT COUNT(*) as count FROM equipment_stats').get().count
     const weaponCount = this.db.prepare('SELECT COUNT(*) as count FROM weapon_stats').get().count
     const monsterCount = this.db.prepare('SELECT COUNT(*) as count FROM monsters').get().count
@@ -479,6 +559,8 @@ class DatabaseService {
 
     return {
       items: itemCount,
+      itemsWithIcons: itemsWithIcons,
+      iconCoverage: itemCount > 0 ? ((itemsWithIcons / itemCount) * 100).toFixed(1) + '%' : '0%',
       equipment: equipmentCount,
       weapons: weaponCount,
       monsters: monsterCount,

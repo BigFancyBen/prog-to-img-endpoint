@@ -2,6 +2,7 @@ import { readFile } from 'fs/promises'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import OSRSDataService from './osrsDataService.js'
+import IconService from './iconService.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -78,24 +79,20 @@ class FileService {
   }
 
   /**
-   * Get item icon as base64 from item data or downloaded icons
+   * Get item icon as base64 from database or filesystem
    * @param {number} itemId - Item ID
    * @param {boolean} enableWikiLookup - Enable automatic wiki lookup for missing items
    * @returns {Promise<string>} Base64 encoded image
    */
   static async getItemIconUrl(itemId, enableWikiLookup = true) {
     try {
-      // First, check if we have a downloaded icon file by item ID (preferred format)
-      const iconPath = join(__dirname, '../../icons/items', `${itemId}.png`)
-      try {
-        const iconBuffer = await readFile(iconPath)
-        const base64Icon = iconBuffer.toString('base64')
-        return `data:image/png;base64,${base64Icon}`
-      } catch (iconError) {
-        // Icon file doesn't exist, continue to item data lookup
+      // Use the new IconService to get icons from database first, then filesystem
+      const iconDataUrl = await IconService.getItemIcon(itemId)
+      if (iconDataUrl) {
+        return iconDataUrl
       }
       
-      // Get the item data which may contain local icon filename
+      // Get the item data which may contain additional icon info
       const itemData = await this.getItemData(itemId, enableWikiLookup)
       
       // If this is a missing/placeholder item, return placeholder icon immediately
@@ -103,18 +100,6 @@ class FileService {
         console.warn(`⚠️  Using placeholder icon for missing item ${itemId}`)
         const placeholderIcon = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
         return `data:image/png;base64,${placeholderIcon}`
-      }
-      
-      // Check if item has a local icon filename (for backward compatibility)
-      if (itemData.icon && typeof itemData.icon === 'string' && itemData.icon.endsWith('.png')) {
-        try {
-          const iconPath2 = join(__dirname, '../../icons/items', itemData.icon)
-          const iconBuffer = await readFile(iconPath2)
-          const base64Icon = iconBuffer.toString('base64')
-          return `data:image/png;base64,${base64Icon}`
-        } catch (iconError) {
-          // Icon file doesn't exist with the filename from itemData
-        }
       }
       
       // Legacy: check if icon is embedded as base64 in the item data
@@ -189,15 +174,13 @@ class FileService {
   }
 
   /**
-   * Get skill icon as base64 (still local as these don't change)
+   * Get skill icon as base64 using IconService
    * @param {string} skillName - Name of the skill
    * @returns {Promise<string>} Base64 encoded image
    */
   static async getSkillIcon(skillName) {
     try {
-      const iconPath = join(__dirname, '../../icons', `${skillName}.png`)
-      const imageBuffer = await readFile(iconPath)
-      return `data:image/png;base64,${imageBuffer.toString('base64')}`
+      return await IconService.getSkillIcon(skillName)
     } catch (error) {
       console.error(`Error reading skill icon for ${skillName}:`, error)
       // Return a placeholder or throw a more specific error
@@ -206,14 +189,12 @@ class FileService {
   }
 
   /**
-   * Get collection log background (still local)
+   * Get collection log background using IconService
    * @returns {Promise<string>} Base64 encoded image
    */
   static async getCollectionLogBackground() {
     try {
-      const iconPath = join(__dirname, '../../icons/collection-log.png')
-      const imageBuffer = await readFile(iconPath)
-      return `data:image/png;base64,${imageBuffer.toString('base64')}`
+      return await IconService.getCollectionLogIcon()
     } catch (error) {
       console.error('Error reading collection log background:', error)
       throw new Error('Failed to read collection log background')

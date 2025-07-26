@@ -24,7 +24,7 @@ export async function generateCollectionLogImage(data) {
     // Generate SVG
     const svgString = await generateCollectionLogSVG(data)
     
-    // Convert to PNG
+    // Convert to PNG using regular function (keep background in SVG)
     const pngBuffer = await svgToPng(svgString)
     
     // Return in the expected format

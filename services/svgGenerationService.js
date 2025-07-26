@@ -1,5 +1,5 @@
 import sharp from 'sharp'
-import { readFile } from 'fs/promises'
+import { readFile, writeFileSync, unlinkSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { CANVAS_CONFIG, COLORS, FONTS, COLLECTION_LOG_CONFIG } from '../config/constants.js'
@@ -105,6 +105,10 @@ export async function generateCollectionLogSVG(data) {
   // Get background image as base64
   const bgImageBase64 = await FileService.getCollectionLogBackground()
   
+  if (!bgImageBase64) {
+    throw new Error('Collection log background image could not be loaded')
+  }
+  
   // Find item using osrsbox API
   const itemData = await FileService.searchItemByName(data.itemName)
   const itemIconUrl = await FileService.getItemIconUrl(itemData.id)
@@ -130,8 +134,8 @@ export async function generateCollectionLogSVG(data) {
     </style>
   </defs>`
 
-  // Background image
-  svg += `<image href="${bgImageBase64}" width="${WIDTH}" height="${HEIGHT}"/>`
+  // Background image using base64 data URL
+  svg += `<image href="${bgImageBase64}" x="0" y="0" width="${WIDTH}" height="${HEIGHT}"/>`
   
   // Title
   svg += `<text x="${WIDTH/2}" y="45" class="runescape-font orange-text title-text" filter="url(#rs-shadow)">${escapeXML(data.userName)}'s Collection Log</text>`
@@ -262,14 +266,20 @@ async function getFontBase64() {
  * @returns {Promise<Buffer>} PNG buffer
  */
 export async function svgToPng(svgString) {
-  return await sharp(Buffer.from(svgString))
-    .png({ 
-      quality: 100,
-      compressionLevel: 0,
-      adaptiveFiltering: false,
-      force: true
-    })
-    .toBuffer()
+  try {
+    const result = await sharp(Buffer.from(svgString))
+      .png({ 
+        quality: 100,
+        compressionLevel: 0,
+        adaptiveFiltering: false,
+        force: true
+      })
+      .toBuffer()
+    
+    return result
+  } catch (error) {
+    throw error
+  }
 }
 
 /**
