@@ -193,13 +193,13 @@ class DatabaseService {
   insertItem(itemData) {
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO items (
-        id, name, examine, wiki_name, wiki_url, icon_path, icon_url,
+        id, name, examine, wiki_name, wiki_url, icon_path, icon_url, icon_data,
         members, tradeable, tradeable_on_ge, stackable, noted, noteable,
         weight, buy_limit, quest_item, release_date, duplicate,
         equipable, equipable_by_player, equipable_weapon,
         cost, lowalch, highalch, destruction, last_updated
       ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       )
     `)
 
@@ -211,6 +211,7 @@ class DatabaseService {
       itemData.wiki_url,
       itemData.icon_path || null,
       itemData.icon_url || null,
+      itemData.icon_data || null, // Include icon buffer data
       itemData.members ? 1 : 0,
       itemData.tradeable ? 1 : 0,
       itemData.tradeable_on_ge ? 1 : 0,

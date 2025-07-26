@@ -237,13 +237,19 @@ class WikiLookupService {
       // Extract item data
       const iconFilename = parser.extractIcon()
       let localIconPath = null
+      let iconData = null
       
       if (iconFilename) {
         const iconUrl = parser.getIconUrl(iconFilename)
         if (iconUrl) {
           // Download and cache the icon in database using item ID as filename
           const iconFileName = `${id}.png`
-          localIconPath = await this.downloadIcon(iconUrl, iconFileName, id)
+          const iconResult = await this.downloadIcon(iconUrl, iconFileName, id)
+          if (iconResult && iconResult.buffer) {
+            localIconPath = iconResult.fileName
+            // Store the icon buffer for later database insertion
+            iconData = iconResult.buffer
+          }
         }
       }
 
@@ -255,6 +261,7 @@ class WikiLookupService {
         wiki_url: `https://oldschool.runescape.wiki/w/${encodeURIComponent(pageTitle)}`,
         icon_path: localIconPath || null,
         icon_url: null,
+        icon_data: iconData, // Include the downloaded icon buffer
         members: InfoboxCleaner.clean(parser.extractValue('members'), 'boolean'),
         tradeable: InfoboxCleaner.clean(parser.extractValue('tradeable'), 'boolean'),
         tradeable_on_ge: InfoboxCleaner.clean(parser.extractValue('exchangeable'), 'boolean'),
@@ -479,13 +486,19 @@ class WikiLookupService {
         parser.extractIcon()
       
       let localIconPath = null
+      let iconData = null
       
       if (iconFilename) {
         const iconUrl = parser.getIconUrl(iconFilename)
         if (iconUrl) {
           // Download and cache the icon in database using item ID as filename
           const iconFileName = `${id}.png`
-          localIconPath = await this.downloadIcon(iconUrl, iconFileName, id)
+          const iconResult = await this.downloadIcon(iconUrl, iconFileName, id)
+          if (iconResult && iconResult.buffer) {
+            localIconPath = iconResult.fileName
+            // Store the icon buffer for later database insertion
+            iconData = iconResult.buffer
+          }
         }
       }
 
@@ -498,6 +511,7 @@ class WikiLookupService {
         wiki_url: `https://oldschool.runescape.wiki/w/${encodeURIComponent(pageTitle)}`,
         icon_path: localIconPath || null,
         icon_url: null,
+        icon_data: iconData, // Include the downloaded icon buffer
         members: InfoboxCleaner.clean(getName('members'), 'boolean'),
         tradeable: InfoboxCleaner.clean(getName('tradeable'), 'boolean'),
         tradeable_on_ge: InfoboxCleaner.clean(getName('exchangeable'), 'boolean'),
@@ -613,13 +627,11 @@ class WikiLookupService {
         if (iconBuffer) {
           console.log(`  ✅ Success with URL format: ${tryUrl}`)
           
-          // Store icon in database
-          const success = await this.databaseService.storeIconData(itemId, iconBuffer)
-          if (success) {
-            console.log(`  ✅ Icon stored in database for item ${itemId}`)
-            return fileName
-          } else {
-            console.warn(`  ⚠️  Failed to store icon in database for item ${itemId}`)
+          // Return both the filename and the buffer data
+          return {
+            fileName: fileName,
+            buffer: iconBuffer,
+            url: tryUrl
           }
         }
         
@@ -712,6 +724,7 @@ class WikiLookupService {
         wiki_url: itemData.wiki_url,
         icon_path: itemData.icon_path,
         icon_url: itemData.icon_url,
+        icon_data: itemData.icon_data, // Include icon buffer data
         members: itemData.members,
         tradeable: itemData.tradeable,
         tradeable_on_ge: itemData.tradeable_on_ge,
@@ -734,11 +747,19 @@ class WikiLookupService {
       }
       
       // Insert the item into the database
-      this.databaseService.insertItem(dbItemData)
+      const result = this.databaseService.insertItem(dbItemData)
       
-      console.log(`💾 Added item ${itemData.name} (ID: ${itemData.id}) to database`)
-      
-      return true
+      if (result && result.changes > 0) {
+        console.log(`💾 Added item ${itemData.name} (ID: ${itemData.id}) to database`)
+        // If we have icon data, log that it was stored too
+        if (itemData.icon_data) {
+          console.log(`  ✅ Icon data stored in database for item ${itemData.id}`)
+        }
+        return true
+      } else {
+        console.error(`❌ Failed to insert item ${itemData.name} (ID: ${itemData.id}) into database - no changes made`)
+        return false
+      }
     } catch (error) {
       console.error(`❌ Error adding item to database:`, error.message)
       return false
