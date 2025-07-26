@@ -1,12 +1,6 @@
 import databaseService from './databaseService.js'
 import WikiLookupService from './wikiLookupService.js'
-import { readFile, access } from 'fs/promises'
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const ICONS_DIR = join(__dirname, '../icons/items')
+import IconService from './iconService.js'
 
 /**
  * Database-backed data service for OSRS items
@@ -58,7 +52,8 @@ class OSRSDataService {
         return this.createPlaceholderItem(itemId)
       }
       
-      return itemData
+      // Transform the item data to use IconService for icon URL
+      return await this.transformItemData(itemData)
     } catch (error) {
       console.error(`Error fetching item ${itemId}:`, error)
       return this.createPlaceholderItem(itemId)
@@ -83,7 +78,7 @@ class OSRSDataService {
       `).get(name)
       
       if (item) {
-        return item
+        return await this.transformItemData(item)
       }
       
       // If not found in database, try wiki lookup
@@ -218,32 +213,8 @@ class OSRSDataService {
   static async getItemIconUrl(itemId) {
     try {
       // Get item data first to check if we have an icon path
-      const itemData = await this.getItemById(itemId, false)
-      
-      if (itemData && itemData.icon_path) {
-        try {
-          // Try to read the icon file
-          const iconBuffer = await readFile(itemData.icon_path)
-          const base64Icon = iconBuffer.toString('base64')
-          return `data:image/png;base64,${base64Icon}`
-        } catch (iconError) {
-          // Icon file doesn't exist, try default naming convention
-        }
-      }
-      
-      // Try default icon path
-      const iconPath = join(ICONS_DIR, `${itemId}.png`)
-      try {
-        const iconBuffer = await readFile(iconPath)
-        const base64Icon = iconBuffer.toString('base64')
-        return `data:image/png;base64,${base64Icon}`
-      } catch (iconError) {
-        console.warn(`⚠️  No icon found for item ${itemId}`)
-      }
-      
-      // Return placeholder icon
-      const placeholderIcon = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-      return `data:image/png;base64,${placeholderIcon}`
+      // Use IconService for database-first icon retrieval
+      return await IconService.getItemIcon(itemId)
       
     } catch (error) {
       console.error(`Error getting item icon for ${itemId}:`, error)
@@ -264,6 +235,31 @@ class OSRSDataService {
     } catch (error) {
       console.error('Error getting database stats:', error)
       return { items: 0, equipment: 0, weapons: 0, monsters: 0, prayers: 0 }
+    }
+  }
+
+  /**
+   * Transform item data to use IconService for icon URL
+   */
+  static async transformItemData(itemData) {
+    try {
+      // Create a copy of the item data
+      const transformedData = { ...itemData }
+      
+      // Use IconService to get the proper icon data
+      const iconUrl = await IconService.getItemIcon(itemData.id)
+      
+      // Update icon_url to use database-first approach
+      transformedData.icon_url = iconUrl
+      
+      // Keep icon_path as null since we're using database storage
+      transformedData.icon_path = null
+      
+      return transformedData
+    } catch (error) {
+      console.error(`Error transforming item data for item ${itemData.id}:`, error)
+      // Return original data if transformation fails
+      return itemData
     }
   }
 

@@ -57,11 +57,14 @@ export default defineEventHandler(async (event) => {
     }
     
     console.error('Error generating collection log image:', error)
+    console.error('Error stack:', error.stack)
+    console.error('Error message:', error.message)
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal Server Error',
       data: {
         error: 'An unexpected error occurred while generating the collection log image',
+        details: error.message,
         suggestion: 'Please try again or contact support if the problem persists.'
       }
     })
