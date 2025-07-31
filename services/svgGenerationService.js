@@ -1,10 +1,12 @@
 import sharp from 'sharp'
-import { readFile, writeFileSync, unlinkSync, existsSync } from 'fs'
+import { readFile } from 'fs/promises'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { CANVAS_CONFIG, COLORS, FONTS, COLLECTION_LOG_CONFIG } from '../config/constants.js'
 import { formatRuntime, formatCount, formatXP, getCurrentDate } from '../utils/formatters.js'
 import FileService from './fileService.js'
+import IconService from './iconService.js'
+import databaseService from './databaseService.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -102,20 +104,36 @@ export async function generateProgressSVG(data) {
 export async function generateCollectionLogSVG(data) {
   const { WIDTH, HEIGHT, ICON_SIZE, ICON_POSITION } = COLLECTION_LOG_CONFIG
   
-  // Get background image as base64
-  const bgImageBase64 = await FileService.getCollectionLogBackground()
+  // Initialize database
+  await databaseService.init()
+  
+  // Get background image from IconService (using special_icons table)
+  const bgImageBase64 = await IconService.getCollectionLogIcon()
   
   if (!bgImageBase64) {
     throw new Error('Collection log background image could not be loaded')
   }
   
-  // Find item using osrsbox API
-  const itemData = await FileService.searchItemByName(data.itemName)
-  const itemIconUrl = await FileService.getItemIconUrl(itemData.id)
-
-  let svg = `<svg width="${WIDTH}" height="${HEIGHT}" xmlns="http://www.w3.org/2000/svg">`
+  // Find item in database and get its icon
+  const itemData = await databaseService.searchItemsByNameOnly(data.itemName)
+  if (!itemData || itemData.length === 0) {
+    throw new Error(`Item not found: ${data.itemName}`)
+  }
   
-  // Add font definition and drop shadow filter
+  // Get the first matching item
+  const item = itemData[0]
+  const itemIconBase64 = await IconService.getItemIcon(item.id)
+  
+  if (!itemIconBase64) {
+    throw new Error(`Failed to load icon for item: ${data.itemName} (ID: ${item.id})`)
+  }
+  
+  // Convert both background and item icon to PNG for SVG compatibility
+  const bgImagePng = await convertToPngDataUrl(bgImageBase64)
+  const itemIconPng = await convertToPngDataUrl(itemIconBase64)
+
+  let svg = `<svg width="${WIDTH}" height="${HEIGHT}" xmlns="http://www.w3.org/2000/svg">`;
+  // Add drop shadow filter and style (no @font-face, just font-family)
   svg += `<defs>
     <filter id="rs-shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="2" dy="2" stdDeviation="0" flood-color="black" flood-opacity="1"/>
@@ -128,27 +146,52 @@ export async function generateCollectionLogSVG(data) {
       }
       .orange-text { fill: #ff981f; }
       .white-text { fill: #ffffff; }
+      .examine-text { fill: #ffffff; }
+      .date-small { fill: #cccccc; }
       .title-text { font-size: 25px; text-anchor: middle; }
       .date-text { font-size: 16px; text-anchor: middle; }
       .item-text { font-size: 22px; text-anchor: middle; }
+      .examine-item-text { font-size: 14px; text-anchor: middle; font-family: 'Runescape Chat', 'RuneScape UF', 'Runescape', monospace; }
+      .small-date-text { font-size: 12px; text-anchor: end; }
     </style>
-  </defs>`
+  </defs>`;
 
   // Background image using base64 data URL
-  svg += `<image href="${bgImageBase64}" x="0" y="0" width="${WIDTH}" height="${HEIGHT}"/>`
+  svg += `<image href="${bgImagePng}" x="0" y="0" width="${WIDTH}" height="${HEIGHT}"/>`
   
   // Title
   svg += `<text x="${WIDTH/2}" y="45" class="runescape-font orange-text title-text" filter="url(#rs-shadow)">${escapeXML(data.userName)}'s Collection Log</text>`
   
-  // Date and new item text
+  // Move center section down a few px
+  const centerYOffset = 8;
+
+  // Item name (orange color, moved down)
+  svg += `<text x="${WIDTH/2}" y="${98 + centerYOffset}" class="runescape-font orange-text item-text" filter="url(#rs-shadow)">${escapeXML(data.itemName)}</text>`
+
+  // Small date in bottom right corner (keep as previously adjusted)
   const curDate = getCurrentDate()
-  svg += `<text x="${WIDTH/2}" y="100" class="runescape-font orange-text date-text" filter="url(#rs-shadow)">${curDate} - New item:</text>`
-  
-  // Item name
-  svg += `<text x="${WIDTH/2}" y="125" class="runescape-font white-text item-text" filter="url(#rs-shadow)">${escapeXML(data.itemName)}</text>`
-  
-  // Item icon
-  svg += `<image href="${itemIconUrl}" x="${ICON_POSITION.x}" y="${ICON_POSITION.y}" width="${ICON_SIZE}" height="${ICON_SIZE}"/>`
+  const shortDate = formatShortDate(curDate)
+  svg += `<text x="${WIDTH - 20}" y="${HEIGHT - 5}" class="runescape-font date-small small-date-text">${shortDate}</text>`
+
+  // Item icon using base64 data URL (move down by centerYOffset)
+  const iconY = ICON_POSITION.y - 12 + centerYOffset;
+  svg += `<image href="${itemIconBase64}" x="${ICON_POSITION.x}" y="${iconY}" width="${ICON_SIZE}" height="${ICON_SIZE}"/>`
+
+  // Examine text below the icon (move down by centerYOffset, increase gap to 18px)
+  if (item.examine && item.examine.trim()) {
+    const examineY = iconY + ICON_SIZE + 18; // 18px below icon
+    const examineText = item.examine.trim()
+
+    // Wrap long examine text across multiple lines
+    const maxLineLength = 50 // characters per line
+    const lines = wrapText(examineText, maxLineLength)
+
+    const lineHeight = 13; // reduced from 16px
+    lines.forEach((line, index) => {
+      const lineY = examineY + (index * lineHeight);
+      svg += `<text x="${WIDTH/2}" y="${lineY}" class="examine-text examine-item-text" style="font-family: 'Runescape Chat', 'RuneScape UF', 'Runescape', monospace;">${escapeXML(line)}</text>`;
+    })
+  }
 
   svg += '</svg>'
   return svg
@@ -261,6 +304,38 @@ async function getFontBase64() {
 }
 
 /**
+ * Convert WebP data URL to PNG data URL for SVG compatibility
+ * @param {string} dataUrl - Base64 data URL (could be PNG or WebP)
+ * @returns {Promise<string>} PNG data URL
+ */
+async function convertToPngDataUrl(dataUrl) {
+  if (!dataUrl || !dataUrl.includes('base64')) {
+    return dataUrl
+  }
+  
+  // If it's already PNG, return as-is
+  if (dataUrl.includes('image/png')) {
+    return dataUrl
+  }
+  
+  try {
+    // Extract base64 data
+    const base64Data = dataUrl.split(',')[1]
+    const imageBuffer = Buffer.from(base64Data, 'base64')
+    
+    // Convert to PNG using Sharp
+    const pngBuffer = await sharp(imageBuffer)
+      .png({ quality: 100, compressionLevel: 0 })
+      .toBuffer()
+    
+    return `data:image/png;base64,${pngBuffer.toString('base64')}`
+  } catch (error) {
+    console.warn('Failed to convert image to PNG, using original:', error.message)
+    return dataUrl
+  }
+}
+
+/**
  * Convert SVG to PNG using Sharp
  * @param {string} svgString - SVG markup
  * @returns {Promise<Buffer>} PNG buffer
@@ -280,6 +355,57 @@ export async function svgToPng(svgString) {
   } catch (error) {
     throw error
   }
+}
+
+/**
+ * Format date as short MM/DD/YY format
+ * @param {string} dateString - Date string from getCurrentDate()
+ * @returns {string} Short formatted date
+ */
+function formatShortDate(dateString) {
+  // getCurrentDate() returns format like "July 31, 2025"
+  const date = new Date(dateString)
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const year = String(date.getFullYear()).slice(-2)
+  return `${month}/${day}/${year}`
+}
+
+/**
+ * Wrap text to multiple lines
+ * @param {string} text - Text to wrap
+ * @param {number} maxLength - Maximum characters per line
+ * @returns {Array<string>} Array of wrapped lines
+ */
+function wrapText(text, maxLength) {
+  if (text.length <= maxLength) {
+    return [text]
+  }
+  
+  const words = text.split(' ')
+  const lines = []
+  let currentLine = ''
+  
+  for (const word of words) {
+    if ((currentLine + ' ' + word).trim().length <= maxLength) {
+      currentLine = currentLine ? currentLine + ' ' + word : word
+    } else {
+      if (currentLine) {
+        lines.push(currentLine)
+        currentLine = word
+      } else {
+        // Word is longer than maxLength, split it
+        lines.push(word.slice(0, maxLength))
+        currentLine = word.slice(maxLength)
+      }
+    }
+  }
+  
+  if (currentLine) {
+    lines.push(currentLine)
+  }
+  
+  return lines
 }
 
 /**

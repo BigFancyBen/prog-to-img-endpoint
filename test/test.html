@@ -511,8 +511,16 @@ class OSRSAPITester {
 
         this.createTestCard('Equipment Collection', async () => {
             const response = await axios.post(`${this.serverUrl}/api/collection-log`, {
-                itemName: "Verac's brassard",
+                itemName: "Dinh's Bulwark",
                 userName: "Big Fancy Ben"
+            });
+            return response.data.body ? JSON.parse(response.data.body) : response.data;
+        }, 'collectionTests');
+
+        this.createTestCard('Long Examine Text', async () => {
+            const response = await axios.post(`${this.serverUrl}/api/collection-log`, {
+                itemName: "Ancestral key",
+                userName: "ExamineTestUser"
             });
             return response.data.body ? JSON.parse(response.data.body) : response.data;
         }, 'collectionTests');

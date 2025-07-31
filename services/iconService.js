@@ -1,6 +1,22 @@
 import databaseService from './databaseService.js'
 
 /**
+ * Detect image format from buffer
+ */
+function detectImageFormat(buffer) {
+  if (!buffer || buffer.length < 8) return 'png'
+  
+  const hex = buffer.slice(0, 8).toString('hex')
+  
+  if (hex.startsWith('89504e47')) return 'png'
+  if (hex.startsWith('52494646')) return 'webp'  // RIFF (WebP)
+  if (hex.startsWith('ffd8ff')) return 'jpeg'
+  if (hex.startsWith('47494638')) return 'gif'
+  
+  return 'png' // default fallback
+}
+
+/**
  * Database-only icon service - all icons must be stored in the database
  */
 class IconService {
@@ -11,8 +27,9 @@ class IconService {
     try {
       const iconBuffer = databaseService.getIconData(itemId)
       if (iconBuffer && iconBuffer.length > 0) {
+        const format = detectImageFormat(iconBuffer)
         const base64Data = iconBuffer.toString('base64')
-        return `data:image/png;base64,${base64Data}`
+        return `data:image/${format};base64,${base64Data}`
       }
       
       console.warn(`No icon found in database for item ${itemId}`)
@@ -101,11 +118,19 @@ class IconService {
    */
   static async getSkillIcon(skillName) {
     try {
+      // Try new special_icons table first
+      const specialIcon = await this.getSkillIconFromSpecialTable(skillName)
+      if (specialIcon) {
+        return specialIcon
+      }
+      
+      // Fallback to old method with negative IDs
       const skillId = this.getSkillIconId(skillName)
       const iconBuffer = databaseService.getIconData(skillId)
       
       if (iconBuffer && iconBuffer.length > 0) {
-        return `data:image/png;base64,${iconBuffer.toString('base64')}`
+        const format = detectImageFormat(iconBuffer)
+        return `data:image/${format};base64,${iconBuffer.toString('base64')}`
       }
       
       console.warn(`No skill icon found in database for ${skillName} (ID: ${skillId})`)
@@ -157,10 +182,17 @@ class IconService {
    */
   static async getCollectionLogIcon() {
     try {
-      // Use a special ID for collection log background
+      // Try new special_icons table first
+      const specialIcon = await this.getCollectionLogIconFromSpecialTable()
+      if (specialIcon) {
+        return specialIcon
+      }
+      
+      // Fallback to old method with negative ID
       const iconBuffer = databaseService.getIconData(-100)
       if (iconBuffer && iconBuffer.length > 0) {
-        return `data:image/png;base64,${iconBuffer.toString('base64')}`
+        const format = detectImageFormat(iconBuffer)
+        return `data:image/${format};base64,${iconBuffer.toString('base64')}`
       }
       
       console.warn('No collection log icon found in database')
@@ -224,6 +256,57 @@ class IconService {
     ]
     
     return skills.filter(skill => !this.hasSkillIcon(skill))
+  }
+
+  /**
+   * Get skill icon from the special_icons table (NEW METHOD)
+   */
+  static async getSkillIconFromSpecialTable(skillName) {
+    try {
+      const db = databaseService.db
+      const skillIcon = db.prepare(`
+        SELECT icon_data, icon_mime_type 
+        FROM special_icons 
+        WHERE name = ? AND type = 'skill'
+      `).get(skillName.toLowerCase())
+      
+      if (skillIcon && skillIcon.icon_data) {
+        const mimeType = skillIcon.icon_mime_type || 'image/png'
+        return `data:${mimeType};base64,${skillIcon.icon_data}`
+      }
+      
+      console.warn(`No skill icon found in special_icons table for ${skillName}`)
+      return null
+      
+    } catch (error) {
+      console.error(`Error loading skill icon ${skillName}:`, error)
+      return null
+    }
+  }
+
+  /**
+   * Get collection log background from the special_icons table (NEW METHOD)
+   */
+  static async getCollectionLogIconFromSpecialTable() {
+    try {
+      const db = databaseService.db
+      const bgIcon = db.prepare(`
+        SELECT icon_data, icon_mime_type 
+        FROM special_icons 
+        WHERE type = 'background' AND name = 'collection-log-background'
+      `).get()
+      
+      if (bgIcon && bgIcon.icon_data) {
+        const mimeType = bgIcon.icon_mime_type || 'image/png'
+        return `data:${mimeType};base64,${bgIcon.icon_data}`
+      }
+      
+      console.warn('No collection log background found in special_icons table')
+      return null
+    } catch (error) {
+      console.error('Error loading collection log background:', error)
+      return null
+    }
   }
 }
 

@@ -1,19 +1,15 @@
 {
-  "timestamp": "2025-07-31T05:48:28.156Z",
+  "timestamp": "2025-07-31T06:09:14.288Z",
   "stats": {
-    "total": 4,
-    "success": 1,
-    "failed": 3,
+    "total": 1,
+    "success": 0,
+    "failed": 1,
     "corrupted_fixed": 0,
     "errors": [
-      "??? mixture (ID: 5589): No valid images found",
-      "??? mixture (ID: 5590): No valid images found",
-      "??? mixture (ID: 5591): No valid images found"
+      "Magic carpet (animation item) (ID: 5614): No valid images found"
     ]
   },
   "errors": [
-    "??? mixture (ID: 5589): No valid images found",
-    "??? mixture (ID: 5590): No valid images found",
-    "??? mixture (ID: 5591): No valid images found"
+    "Magic carpet (animation item) (ID: 5614): No valid images found"
   ]
 }

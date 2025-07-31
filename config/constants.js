@@ -44,6 +44,6 @@ export const COIN_IDS = [617, 995, 996, 997, 998, 999, 1000, 1001, 1002, 1003, 1
 export const COLLECTION_LOG_CONFIG = {
   WIDTH: 396,
   HEIGHT: 221,
-  ICON_SIZE: 50,
-  ICON_POSITION: { x: 173, y: 135 }
+  ICON_SIZE: 32,
+  ICON_POSITION: { x: 182, y: 123 }
 } 
