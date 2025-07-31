@@ -183,7 +183,7 @@ export async function generateCollectionLogSVG(data) {
   svg += `<text x="${WIDTH/2}" y="45" class="runescape-font orange-text title-text" filter="url(#rs-shadow)">${escapeXML(data.userName)}'s Collection Log</text>`
   
   // Move center section down a few px
-  const centerYOffset = 8;
+  const centerYOffset = 3;
 
   // Item name (orange color, moved down)
   svg += `<text x="${WIDTH/2}" y="${98 + centerYOffset}" class="runescape-font orange-text item-text" filter="url(#rs-shadow)">${escapeXML(data.itemName)}</text>`
@@ -211,7 +211,7 @@ export async function generateCollectionLogSVG(data) {
       const lineY = examineY + (index * lineHeight);
               // Compensate for skew offset and adjust to center relative to icon
         const skewOffset = (line.length * 7 * 0.1) / 2; // Approximate compensation for skewX(-10deg)
-        const additionalOffset = 20 // Additional offset to center relative to icon
+        const additionalOffset = 23 // Additional offset to center relative to icon
         const adjustedX = (WIDTH/2) + skewOffset + additionalOffset;
       svg += `<text x="${adjustedX}" y="${lineY}" class="examine-text examine-item-text" style="font-family: 'Runescape Chat', 'RuneScape UF', 'Runescape', monospace; transform: skewX(-10deg);">${escapeXML(line)}</text>`;
     })

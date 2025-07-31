@@ -1,4 +1,4 @@
-import { c as defineEventHandler, g as getRouterParam, h as getQuery, e as createError } from '../../../_/nitro.mjs';
+import { c as defineEventHandler, h as getRouterParam, g as getQuery, e as createError } from '../../../_/nitro.mjs';
 import { O as OSRSDataService } from '../../../_/osrsDataService.mjs';
 import 'node:http';
 import 'node:https';

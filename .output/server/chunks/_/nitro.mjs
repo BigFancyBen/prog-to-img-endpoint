@@ -4207,9 +4207,9 @@ const assets = {
   },
   "/index.html": {
     "type": "text/html; charset=utf-8",
-    "etag": "\"2c73-HpO5mzya+QmQB6Qk1f0TUYuUCkY\"",
-    "mtime": "2025-07-31T22:37:02.305Z",
-    "size": 11379,
+    "etag": "\"2c69-IdRAqkSKTe55K3fqKViZyILd9r4\"",
+    "mtime": "2025-07-31T23:36:20.920Z",
+    "size": 11369,
     "path": "../public/index.html"
   },
   "/docs/items.html": {
@@ -4256,16 +4256,16 @@ const assets = {
   },
   "/data/osrs.db-shm": {
     "type": "text/plain; charset=utf-8",
-    "etag": "\"8000-SqVljUS+Fq96QfHXJD1YDBQLvK0\"",
-    "mtime": "2025-07-31T20:54:47.769Z",
+    "etag": "\"8000-YI7rdIgEJFPJykD34TmPwaJw8/Q\"",
+    "mtime": "2025-07-31T23:35:36.051Z",
     "size": 32768,
     "path": "../public/data/osrs.db-shm"
   },
   "/data/osrs.db-wal": {
     "type": "text/plain; charset=utf-8",
-    "etag": "\"20320-IdugCdbuB4P0HqHEdLZ35Ft1UVM\"",
-    "mtime": "2025-07-31T20:52:11.748Z",
-    "size": 131872,
+    "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
+    "mtime": "2025-07-31T23:35:36.050Z",
+    "size": 0,
     "path": "../public/data/osrs.db-wal"
   },
   "/data/wiki-checkpoint.json": {
@@ -4281,6 +4281,62 @@ const assets = {
     "mtime": "2025-07-23T05:14:17.710Z",
     "size": 1235,
     "path": "../public/data/wiki-icons-checkpoint.json"
+  },
+  "/font/runescape.ttf": {
+    "type": "font/ttf",
+    "etag": "\"37a8-H+uLKLjAWQS8z/4bBxweWv6wUkI\"",
+    "mtime": "2025-06-30T00:45:10.329Z",
+    "size": 14248,
+    "path": "../public/font/runescape.ttf"
+  },
+  "/font/runescape_chat.ttf": {
+    "type": "font/ttf",
+    "etag": "\"8e30-HjlH00zcqcuPSYDr/Pnaf7qRh7s\"",
+    "mtime": "2025-07-31T18:09:09.000Z",
+    "size": 36400,
+    "path": "../public/font/runescape_chat.ttf"
+  },
+  "/test/all-items-display-dynamic.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"425b-2RYGjnrSrdVWPGoj2b7JgiKWbhQ\"",
+    "mtime": "2025-07-31T22:06:38.513Z",
+    "size": 16987,
+    "path": "../public/test/all-items-display-dynamic.html"
+  },
+  "/test/collection-log-tester.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"610b-/aMmOrBfu7C0Xn8rfw6fpLha7OQ\"",
+    "mtime": "2025-07-26T17:07:44.753Z",
+    "size": 24843,
+    "path": "../public/test/collection-log-tester.html"
+  },
+  "/test/robust-tester.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"3d8c-MSqE1FyOdJnsqjZ0zt/yaUJBNHQ\"",
+    "mtime": "2025-07-26T17:07:44.753Z",
+    "size": 15756,
+    "path": "../public/test/robust-tester.html"
+  },
+  "/test/simple-test.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"76-iMw9xpz7zqjWqfGBqjQS34fK9fY\"",
+    "mtime": "2025-07-31T23:19:09.576Z",
+    "size": 118,
+    "path": "../public/test/simple-test.html"
+  },
+  "/test/simple-test.html~": {
+    "type": "text/plain; charset=utf-8",
+    "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
+    "mtime": "2025-07-31T23:19:11.123Z",
+    "size": 0,
+    "path": "../public/test/simple-test.html~"
+  },
+  "/test/test.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"5217-RLi/KQTvtaOLK5LesV+3hhGaCHA\"",
+    "mtime": "2025-07-31T18:46:12.926Z",
+    "size": 21015,
+    "path": "../public/test/test.html"
   },
   "/icons/agility.png": {
     "type": "image/png",
@@ -4450,76 +4506,6 @@ const assets = {
     "size": 233,
     "path": "../public/icons/woodcutting.png"
   },
-  "/font/runescape.ttf": {
-    "type": "font/ttf",
-    "etag": "\"37a8-H+uLKLjAWQS8z/4bBxweWv6wUkI\"",
-    "mtime": "2025-06-30T00:45:10.329Z",
-    "size": 14248,
-    "path": "../public/font/runescape.ttf"
-  },
-  "/font/runescape_chat.ttf": {
-    "type": "font/ttf",
-    "etag": "\"8e30-HjlH00zcqcuPSYDr/Pnaf7qRh7s\"",
-    "mtime": "2025-07-31T18:09:09.000Z",
-    "size": 36400,
-    "path": "../public/font/runescape_chat.ttf"
-  },
-  "/test/all-items-display-dynamic.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"425b-2RYGjnrSrdVWPGoj2b7JgiKWbhQ\"",
-    "mtime": "2025-07-31T22:06:38.513Z",
-    "size": 16987,
-    "path": "../public/test/all-items-display-dynamic.html"
-  },
-  "/test/collection-log-tester.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"610b-/aMmOrBfu7C0Xn8rfw6fpLha7OQ\"",
-    "mtime": "2025-07-26T17:07:44.753Z",
-    "size": 24843,
-    "path": "../public/test/collection-log-tester.html"
-  },
-  "/test/dynamic-items.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"425c-C5B5OslXiEugnX3JOev28qmvicU\"",
-    "mtime": "2025-07-31T21:07:36.761Z",
-    "size": 16988,
-    "path": "../public/test/dynamic-items.html"
-  },
-  "/test/robust-tester.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"3d8c-MSqE1FyOdJnsqjZ0zt/yaUJBNHQ\"",
-    "mtime": "2025-07-26T17:07:44.753Z",
-    "size": 15756,
-    "path": "../public/test/robust-tester.html"
-  },
-  "/test/simple-test.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"76-iMw9xpz7zqjWqfGBqjQS34fK9fY\"",
-    "mtime": "2025-06-30T01:05:26.508Z",
-    "size": 118,
-    "path": "../public/test/simple-test.html"
-  },
-  "/test/simple-test.html~": {
-    "type": "text/plain; charset=utf-8",
-    "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
-    "mtime": "2025-06-30T01:05:26.508Z",
-    "size": 0,
-    "path": "../public/test/simple-test.html~"
-  },
-  "/test/test.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"5217-RLi/KQTvtaOLK5LesV+3hhGaCHA\"",
-    "mtime": "2025-07-31T18:46:12.926Z",
-    "size": 21015,
-    "path": "../public/test/test.html"
-  },
-  "/data/processed/summary.json": {
-    "type": "application/json",
-    "etag": "\"14a-eZ+woDImQ0i2EpxXlDgsd0fIzeo\"",
-    "mtime": "2025-07-26T00:51:11.277Z",
-    "size": 330,
-    "path": "../public/data/processed/summary.json"
-  },
   "/data/cache/items-complete.json": {
     "type": "application/json",
     "etag": "\"2917b24-WuiaxX5zQb6tP+GQQn7ABJ0F8UM\"",
@@ -4554,6 +4540,13 @@ const assets = {
     "mtime": "2025-06-30T01:05:25.783Z",
     "size": 2,
     "path": "../public/data/cache/wiki-items.json"
+  },
+  "/data/processed/summary.json": {
+    "type": "application/json",
+    "etag": "\"14a-eZ+woDImQ0i2EpxXlDgsd0fIzeo\"",
+    "mtime": "2025-07-26T00:51:11.277Z",
+    "size": 330,
+    "path": "../public/data/processed/summary.json"
   },
   "/data/streaming/items-stream.jsonl": {
     "type": "text/plain; charset=utf-8",
@@ -4761,10 +4754,8 @@ const _lazy_yVrBVf = () => import('../routes/docs/items.get.mjs');
 const _lazy_rCuUod = () => import('../routes/docs/monsters.get.mjs');
 const _lazy_OB_VPA = () => import('../routes/docs/prayers.get.mjs');
 const _lazy_6MXOI6 = () => import('../routes/docs/progress-image.get.mjs');
-const _lazy_TDNSom = () => import('../routes/dynamic-items.get.mjs');
-const _lazy_hMo7P1 = () => import('../routes/getCollectionLogItem.post.mjs');
-const _lazy_zX4aZM = () => import('../routes/getImage.post.mjs');
 const _lazy_MmDG6x = () => import('../routes/index.get2.mjs');
+const _lazy_Nt0PIp = () => import('../routes/items-display-test.get.mjs');
 const _lazy_aaHfqf = () => import('../routes/osrs/equipment/_id_.get.mjs');
 const _lazy_yq8S3H = () => import('../routes/osrs/index.get.mjs');
 const _lazy_5xsEet = () => import('../routes/index.get3.mjs');
@@ -4781,13 +4772,7 @@ const _lazy_62G3LM = () => import('../routes/osrs/index.get4.mjs');
 const _lazy_ibCIpH = () => import('../routes/osrs/search/_type_.get.mjs');
 const _lazy_USmzaT = () => import('../routes/osrs/weapons/_id_.get.mjs');
 const _lazy_yHSNPL = () => import('../routes/osrs/index.get5.mjs');
-const _lazy_u27Ns_ = () => import('../routes/test-search.get.mjs');
 const _lazy_t8j24h = () => import('../routes/test.get.mjs');
-const _lazy_ZG0E9h = () => import('../routes/tests-all-items-display-dynamic.get.mjs');
-const _lazy_hhItcL = () => import('../routes/tests-all-items-display.get.mjs');
-const _lazy_mcYvoS = () => import('../routes/tests.get.mjs');
-const _lazy_7qD7rZ = () => import('../routes/tests/all-items-display-dynamic.get.mjs');
-const _lazy_Z5s9kQ = () => import('../routes/tests/all-items-display.get.mjs');
 
 const handlers = [
   { route: '', handler: _MbPw6O, lazy: false, middleware: true, method: undefined },
@@ -4798,10 +4783,8 @@ const handlers = [
   { route: '/docs/monsters', handler: _lazy_rCuUod, lazy: true, middleware: false, method: "get" },
   { route: '/docs/prayers', handler: _lazy_OB_VPA, lazy: true, middleware: false, method: "get" },
   { route: '/docs/progress-image', handler: _lazy_6MXOI6, lazy: true, middleware: false, method: "get" },
-  { route: '/dynamic-items', handler: _lazy_TDNSom, lazy: true, middleware: false, method: "get" },
-  { route: '/getCollectionLogItem', handler: _lazy_hMo7P1, lazy: true, middleware: false, method: "post" },
-  { route: '/getImage', handler: _lazy_zX4aZM, lazy: true, middleware: false, method: "post" },
   { route: '/', handler: _lazy_MmDG6x, lazy: true, middleware: false, method: "get" },
+  { route: '/items-display-test', handler: _lazy_Nt0PIp, lazy: true, middleware: false, method: "get" },
   { route: '/osrs/equipment/:id', handler: _lazy_aaHfqf, lazy: true, middleware: false, method: "get" },
   { route: '/osrs/equipment', handler: _lazy_yq8S3H, lazy: true, middleware: false, method: "get" },
   { route: '/osrs', handler: _lazy_5xsEet, lazy: true, middleware: false, method: "get" },
@@ -4818,13 +4801,7 @@ const handlers = [
   { route: '/osrs/search/:type', handler: _lazy_ibCIpH, lazy: true, middleware: false, method: "get" },
   { route: '/osrs/weapons/:id', handler: _lazy_USmzaT, lazy: true, middleware: false, method: "get" },
   { route: '/osrs/weapons', handler: _lazy_yHSNPL, lazy: true, middleware: false, method: "get" },
-  { route: '/test-search', handler: _lazy_u27Ns_, lazy: true, middleware: false, method: "get" },
-  { route: '/test', handler: _lazy_t8j24h, lazy: true, middleware: false, method: "get" },
-  { route: '/tests-all-items-display-dynamic', handler: _lazy_ZG0E9h, lazy: true, middleware: false, method: "get" },
-  { route: '/tests-all-items-display', handler: _lazy_hhItcL, lazy: true, middleware: false, method: "get" },
-  { route: '/tests', handler: _lazy_mcYvoS, lazy: true, middleware: false, method: "get" },
-  { route: '/tests/all-items-display-dynamic', handler: _lazy_7qD7rZ, lazy: true, middleware: false, method: "get" },
-  { route: '/tests/all-items-display', handler: _lazy_Z5s9kQ, lazy: true, middleware: false, method: "get" }
+  { route: '/test', handler: _lazy_t8j24h, lazy: true, middleware: false, method: "get" }
 ];
 
 function createNitroApp() {
@@ -5211,5 +5188,5 @@ function setupGracefulShutdown(listener, nitroApp) {
   });
 }
 
-export { trapUnhandledNodeErrors as a, useNitroApp as b, defineEventHandler as c, destr as d, createError$1 as e, setHeader as f, getRouterParam as g, getQuery as h, readBody as r, setupGracefulShutdown as s, toNodeListener as t, useRuntimeConfig as u };
+export { trapUnhandledNodeErrors as a, useNitroApp as b, defineEventHandler as c, destr as d, createError$1 as e, setHeader as f, getQuery as g, getRouterParam as h, readBody as r, setupGracefulShutdown as s, toNodeListener as t, useRuntimeConfig as u };
 //# sourceMappingURL=nitro.mjs.map

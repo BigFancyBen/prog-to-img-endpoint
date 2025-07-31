@@ -371,7 +371,7 @@ async function generateCollectionLogSVG(data) {
   </defs>`;
   svg += `<image href="${bgImagePng}" x="0" y="0" width="${WIDTH}" height="${HEIGHT}"/>`;
   svg += `<text x="${WIDTH / 2}" y="45" class="runescape-font orange-text title-text" filter="url(#rs-shadow)">${escapeXML(data.userName)}'s Collection Log</text>`;
-  const centerYOffset = 8;
+  const centerYOffset = 3;
   svg += `<text x="${WIDTH / 2}" y="${98 + centerYOffset}" class="runescape-font orange-text item-text" filter="url(#rs-shadow)">${escapeXML(data.itemName)}</text>`;
   const curDate = getCurrentDate();
   const shortDate = formatShortDate(curDate);
@@ -387,7 +387,7 @@ async function generateCollectionLogSVG(data) {
     lines.forEach((line, index) => {
       const lineY = examineY + index * lineHeight;
       const skewOffset = line.length * 7 * 0.1 / 2;
-      const additionalOffset = 40;
+      const additionalOffset = 23;
       const adjustedX = WIDTH / 2 + skewOffset + additionalOffset;
       svg += `<text x="${adjustedX}" y="${lineY}" class="examine-text examine-item-text" style="font-family: 'Runescape Chat', 'RuneScape UF', 'Runescape', monospace; transform: skewX(-10deg);">${escapeXML(line)}</text>`;
     });
