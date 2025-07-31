@@ -7,8 +7,15 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // Use absolute path to ensure we're always using the right database
-const DB_DIR = join(process.cwd(), 'data')
-const DB_PATH = join(DB_DIR, 'osrs.db')
+// For now, always use the development database to ensure it works
+const isProduction = process.env.NODE_ENV === 'production' || process.cwd().includes('.output')
+let DB_DIR = join(process.cwd(), 'data')
+let DB_PATH = join(DB_DIR, 'osrs.db')
+
+// Log the database path for debugging
+console.log(`🔍 Database path: ${DB_PATH}`)
+console.log(`🔍 Is production: ${isProduction}`)
+console.log(`🔍 Current working directory: ${process.cwd()}`)
 
 /**
  * SQLite database service for OSRS data
@@ -26,6 +33,13 @@ class DatabaseService {
       // Ensure data directory exists
       await mkdir(DB_DIR, { recursive: true })
       
+      // Check if database already exists and has data
+      const { existsSync } = await import('fs')
+      const dbExists = existsSync(DB_PATH)
+      
+      console.log(`🔍 Database file exists: ${dbExists}`)
+      console.log(`🔍 Database path: ${DB_PATH}`)
+      
       // Open database connection
       this.db = new Database(DB_PATH)
       
@@ -35,10 +49,25 @@ class DatabaseService {
       this.db.pragma('cache_size = 1000000')
       this.db.pragma('temp_store = memory')
       
-      // Create tables
+      // Check if database has items before creating tables
+      let itemCount = 0
+      try {
+        itemCount = this.db.prepare('SELECT COUNT(*) as count FROM items').get().count
+        console.log(`🔍 Existing database has ${itemCount} items`)
+      } catch (error) {
+        console.log('🔍 No items table found, will create tables')
+      }
+      
+      // Create tables (this won't overwrite existing data)
       this.createTables()
       
-      console.log('✅ Database initialized successfully')
+      // Check if database has items after creating tables
+      try {
+        itemCount = this.db.prepare('SELECT COUNT(*) as count FROM items').get().count
+        console.log(`✅ Database initialized successfully (${itemCount} items found)`)
+      } catch (error) {
+        console.log('✅ Database initialized successfully (new database)')
+      }
     } catch (error) {
       console.error('❌ Failed to initialize database:', error)
       throw error
@@ -171,6 +200,32 @@ class DatabaseService {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `)
+
+    // Special icons table for skill icons and collection log background
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS special_icons (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        icon_data BLOB,
+        icon_type TEXT,
+        type TEXT,
+        icon_mime_type TEXT,
+        last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    
+    // Add missing columns to existing special_icons table if they don't exist
+    try {
+      this.db.exec(`ALTER TABLE special_icons ADD COLUMN icon_mime_type TEXT`)
+    } catch (error) {
+      // Column already exists, ignore error
+    }
+    
+    try {
+      this.db.exec(`ALTER TABLE special_icons ADD COLUMN type TEXT`)
+    } catch (error) {
+      // Column already exists, ignore error
+    }
 
     // Create indexes for better performance
     this.db.exec(`
@@ -359,6 +414,14 @@ class DatabaseService {
       throw new Error('Database not initialized')
     }
     
+    // Clean the query to handle potential encoding issues
+    const cleanQuery = query.trim()
+    if (!cleanQuery) {
+      return []
+    }
+    
+    console.log(`🔍 Database search for: "${cleanQuery}"`)
+    
     const stmt = this.db.prepare(`
       SELECT i.*, 
              e.attack_stab, e.attack_slash, e.attack_crush, e.attack_magic, e.attack_ranged,
@@ -377,8 +440,10 @@ class DatabaseService {
       LIMIT ?
     `)
 
-    const searchPattern = `%${query}%`
-    const rows = stmt.all(searchPattern, query, limit)
+    const searchPattern = `%${cleanQuery}%`
+    const rows = stmt.all(searchPattern, cleanQuery, limit)
+    
+    console.log(`🔍 Database search returned ${rows.length} results`)
     
     return rows.map(row => this.formatItemFromRow(row))
   }

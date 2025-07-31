@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Items Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .item { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+        .loading { color: #666; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Dynamic Items Test</h1>
+    <button onclick="loadItems()">Load Items</button>
+    <button onclick="searchItems()">Search "sword"</button>
+    <div id="results"></div>
+
+    <script>
+        async function loadItems() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<div class="loading">Loading items...</div>';
+            
+            try {
+                const response = await fetch('/osrs/items?page=1&max_results=5');
+                const data = await response.json();
+                
+                let html = '<h2>Items (5 per page)</h2>';
+                data.items.forEach(item => {
+                    html += `
+                        <div class="item">
+                            <strong>${item.name}</strong> (ID: ${item.id})<br>
+                            ${item.examine || 'No description'}
+                        </div>
+                    `;
+                });
+                results.innerHTML = html;
+            } catch (error) {
+                results.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function searchItems() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<div class="loading">Searching for "sword"...</div>';
+            
+            try {
+                const response = await fetch('/osrs/items/search?name=sword&max_results=5');
+                const data = await response.json();
+                
+                let html = '<h2>Search Results for "sword"</h2>';
+                data.results.forEach(item => {
+                    html += `
+                        <div class="item">
+                            <strong>${item.name}</strong> (ID: ${item.id})<br>
+                            ${item.examine || 'No description'}
+                        </div>
+                    `;
+                });
+                results.innerHTML = html;
+            } catch (error) {
+                results.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html> 

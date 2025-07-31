@@ -1,0 +1,21 @@
+{
+  "name": "prog-to-img-endpoint-prod",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "better-sqlite3": "12.2.0",
+    "bindings": "1.5.0",
+    "color": "4.2.3",
+    "color-convert": "2.0.1",
+    "color-name": "1.1.4",
+    "color-string": "1.9.1",
+    "detect-libc": "2.0.4",
+    "file-uri-to-path": "1.0.0",
+    "is-arrayish": "0.3.2",
+    "semver": "7.7.2",
+    "sharp": "0.32.6",
+    "simple-swizzle": "0.2.2",
+    "zod": "3.25.67"
+  }
+}

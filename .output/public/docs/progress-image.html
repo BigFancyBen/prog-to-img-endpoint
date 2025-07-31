@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Image API - OSRS API Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .back-link {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        
+        .back-link:hover { color: white; }
+        
+        h1 { font-size: 2.2rem; margin-bottom: 10px; }
+        .method { 
+            background: rgba(255,255,255,0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-right: 10px;
+        }
+        
+        .endpoint-path {
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 1rem;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #28a745;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 8px;
+        }
+        
+        h3 {
+            color: #495057;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .try-it-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 10px 0;
+        }
+        
+        .try-it-btn:hover {
+            background: #218838;
+        }
+        
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+            background: #d4edda;
+        }
+        
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .parameter {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+            border-left: 3px solid #6c757d;
+        }
+        
+        .required { border-left-color: #dc3545; }
+        .optional { border-left-color: #28a745; }
+        
+        .param-name {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .param-type {
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+        
+        .param-desc {
+            margin-top: 5px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="back-link">← Back to API Documentation</a>
+            <h1>
+                <span class="method">POST</span>
+                Progress Image Generator
+            </h1>
+            <div class="endpoint-path">/api/progress-image</div>
+            <p>Generate custom progress report images with skills, XP gained, loot collected, and runtime data.</p>
+        </header>
+        
+        <div class="section">
+            <h2>📋 Request Parameters</h2>
+            
+            <div class="parameter required">
+                <div class="param-name">script_name <span class="param-type">string</span></div>
+                <div class="param-desc">Name of the script or activity (e.g., "Seers Agility", "Herblore Training")</div>
+            </div>
+            
+            <div class="parameter required">
+                <div class="param-name">runtime <span class="param-type">number</span></div>
+                <div class="param-desc">Runtime in minutes (must be positive)</div>
+            </div>
+            
+            <div class="parameter optional">
+                <div class="param-name">loot <span class="param-type">array</span></div>
+                <div class="param-desc">Array of items collected during the session</div>
+                <div class="code-block">[
+  {
+    "id": 17,        // Item ID (number)
+    "name": "Grail bell",  // Item name (optional)
+    "count": 36      // Quantity obtained (number)
+  }
+]</div>
+            </div>
+            
+            <div class="parameter optional">
+                <div class="param-name">xp_earned <span class="param-type">array</span></div>
+                <div class="param-desc">Array of XP gained per skill during the session</div>
+                <div class="code-block">[
+  {
+    "skill": "strength",  // Skill name (string)
+    "xp": "42,069"       // XP gained (string with commas)
+  }
+]</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📤 Example Request</h2>
+            <div class="code-block">{
+  "script_name": "Herblore Training Session",
+  "runtime": 75,
+  "loot": [
+    {"id": 91, "name": "Guam potion (unf)", "count": 84},
+    {"id": 199, "name": "Grimy guam leaf", "count": 5},
+    {"id": 207, "name": "Grimy ranarr weed", "count": 44}
+  ],
+  "xp_earned": [
+    {"skill": "herblore", "xp": "15,420"},
+    {"skill": "farming", "xp": "2,100"}
+  ]
+}</div>
+            
+            <button class="try-it-btn" onclick="tryExample()">🧪 Try This Example</button>
+            <div id="result"></div>
+        </div>
+        
+        <div class="section">
+            <h2>📥 Response Format</h2>
+            <p>Returns a JSON object containing the generated image data:</p>
+            <div class="code-block">{
+  "success": true,
+  "imageUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+  "metadata": {
+    "script_name": "Herblore Training Session",
+    "runtime": 75,
+    "total_loot_items": 3,
+    "total_xp_gained": 17520,
+    "skills_trained": ["herblore", "farming"]
+  }
+}</div>
+        </div>
+        
+        <div class="section">
+            <h2>📸 Sample Output</h2>
+            <p>The generated image includes:</p>
+            <ul style="margin: 15px 0 15px 20px;">
+                <li>Script name and runtime</li>
+                <li>XP gained per skill with skill icons</li>
+                <li>Items looted with quantities and icons</li>
+                <li>Professional OSRS-style formatting</li>
+                <li>High-quality PNG format suitable for sharing</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>⚠️ Error Responses</h2>
+            <h3>400 - Validation Error</h3>
+            <div class="code-block">{
+  "error": true,
+  "statusCode": 400,
+  "message": "Validation Error",
+  "data": [
+    {
+      "code": "invalid_type",
+      "expected": "string",
+      "received": "undefined",
+      "path": ["script_name"],
+      "message": "Script name is required"
+    }
+  ]
+}</div>
+            
+            <h3>500 - Server Error</h3>
+            <div class="code-block">{
+  "error": true,
+  "statusCode": 500,
+  "message": "Failed to generate progress image"
+}</div>
+        </div>
+    </div>
+    
+    <script>
+        async function tryExample() {
+            const button = document.querySelector('.try-it-btn');
+            const resultDiv = document.getElementById('result');
+            
+            button.textContent = '⏳ Generating...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/progress-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        script_name: "API Documentation Test",
+                        runtime: 45,
+                        loot: [
+                            {"id": 91, "name": "Guam potion (unf)", "count": 84},
+                            {"id": 199, "name": "Grimy guam leaf", "count": 5}
+                        ],
+                        xp_earned: [
+                            {"skill": "herblore", "xp": "8,420"}
+                        ]
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.className = 'result';
+                    resultDiv.innerHTML = `
+                        <h4>✅ Success!</h4>
+                        <p>Image generated successfully. Check the response data:</p>
+                        <pre style="font-size: 0.8rem; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h4>❌ Error ${response.status}</h4>
+                        <pre style="font-size: 0.8rem;">${JSON.stringify(errorData, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h4>❌ Network Error</h4>
+                    <p>${error.message}</p>
+                `;
+            }
+            
+            button.textContent = '🧪 Try This Example';
+            button.disabled = false;
+        }
+    </script>
+</body>
+</html>

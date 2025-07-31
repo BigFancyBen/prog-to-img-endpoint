@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSRS Items Database - All Items (Live)</title>
+    <style>
+        body { background: #1a1a1a; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #2c3e50, #3498db); border-radius: 10px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .stats { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .stat-card { background: #2c3e50; padding: 15px; border-radius: 8px; text-align: center; border: 2px solid #34495e; min-width: 120px; }
+        .stat-number { font-size: 2em; font-weight: bold; color: #3498db; }
+        .controls { margin-bottom: 20px; padding: 20px; background: #2c3e50; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+        .search-box { flex: 1; min-width: 200px; padding: 10px; font-size: 16px; border: 2px solid #34495e; border-radius: 5px; background: #34495e; color: white; }
+        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .item-card { background: #2c3e50; border: 2px solid #34495e; border-radius: 8px; padding: 15px; display: flex; align-items: center; gap: 15px; }
+        .icon-container { flex-shrink: 0; width: 64px; height: 64px; background: #34495e; border-radius: 5px; display: flex; align-items: center; justify-content: center; border: 2px solid #4a5568; }
+        .item-icon { max-width: 60px; max-height: 60px; image-rendering: pixelated; }
+        .no-icon { color: #7f8c8d; font-size: 12px; text-align: center; }
+        .item-info { flex: 1; }
+        .item-name { font-weight: bold; color: #3498db; margin-bottom: 5px; font-size: 16px; }
+        .item-id { color: #7f8c8d; font-size: 14px; margin-bottom: 5px; }
+        .item-details { font-size: 12px; color: #bdc3c7; }
+        .item-examine { font-style: italic; color: #95a5a6; margin-top: 5px; font-size: 11px; }
+        .loading { text-align: center; padding: 50px; font-size: 18px; color: #7f8c8d; }
+        @media (max-width: 768px) { .items-grid { grid-template-columns: 1fr; } .controls { flex-direction: column; align-items: stretch; } .stats { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗡️ OSRS Items Database (Live)</h1>
+            <p>Complete database of Old School RuneScape items with icons (live data)</p>
+        </div>
+        <div class="stats" id="stats">
+            <div class="stat-card"><div class="stat-number" id="totalItems">...</div><div>Total Items</div></div>
+            <div class="stat-card"><div class="stat-number" id="withIcons">...</div><div>With Icons</div></div>
+            <div class="stat-card"><div class="stat-number" id="withoutIcons">...</div><div>Missing Icons</div></div>
+            <div class="stat-card"><div class="stat-number" id="iconCoverage">...</div><div>Icon Coverage</div></div>
+        </div>
+        <div class="controls">
+            <input type="text" id="searchBox" class="search-box" placeholder="Search items by name, ID, or examine text...">
+        </div>
+        <div class="section">
+            <div class="section-title">
+                <h2>📦 All Items (<span id="itemCount">...</span>)</h2>
+            </div>
+            <div id="itemsContainer" class="items-grid">
+                <div class="loading">Loading items...</div>
+            </div>
+        </div>
+    </div>
+    <script>
+    let allItems = [];
+    async function loadItems() {
+        const res = await fetch('/osrs/items?limit=10000');
+        const data = await res.json();
+        allItems = data.items || [];
+        updateStats(allItems);
+        renderItems(allItems);
+    }
+    function updateStats(items) {
+        document.getElementById('totalItems').textContent = items.length;
+        const withIcons = items.filter(i => i.icon).length;
+        const withoutIcons = items.length - withIcons;
+        document.getElementById('withIcons').textContent = withIcons;
+        document.getElementById('withoutIcons').textContent = withoutIcons;
+        document.getElementById('iconCoverage').textContent = items.length ? ((withIcons / items.length) * 100).toFixed(1) + '%' : '0%';
+        document.getElementById('itemCount').textContent = items.length;
+    }
+    function renderItems(items) {
+        const container = document.getElementById('itemsContainer');
+        if (!items.length) {
+            container.innerHTML = '<div class="loading">No items found.</div>';
+            return;
+        }
+        container.innerHTML = items.map(item => `
+            <div class="item-card">
+                <div class="icon-container">
+                    ${item.icon ? `<img src="${item.icon}" class="item-icon">` : `<div class="no-icon">No Icon</div>`}
+                </div>
+                <div class="item-info">
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-id">ID: ${item.id}</div>
+                    <div class="item-details">${item.members ? '🧑‍🤝‍🧑 Members' : '🆓 F2P'} | ${item.tradeable ? '💰 Tradeable' : '🚫 Untradeable'} | ${item.stackable ? '📦 Stackable' : '📦 Non-stackable'}</div>
+                    <div class="item-examine">${item.examine || ''}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+    document.getElementById('searchBox').addEventListener('input', function(e) {
+        const q = e.target.value.toLowerCase();
+        renderItems(allItems.filter(item =>
+            item.name.toLowerCase().includes(q) ||
+            String(item.id).includes(q) ||
+            (item.examine && item.examine.toLowerCase().includes(q))
+        ));
+    });
+    loadItems();
+    </script>
+</body>
+</html>

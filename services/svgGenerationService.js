@@ -105,7 +105,16 @@ export async function generateCollectionLogSVG(data) {
   const { WIDTH, HEIGHT, ICON_SIZE, ICON_POSITION } = COLLECTION_LOG_CONFIG
   
   // Initialize database
+  console.log('🔍 Initializing database for collection log generation...')
   await databaseService.init()
+  
+  // Verify database is working
+  const stats = databaseService.getStats()
+  console.log('🔍 Database stats:', stats)
+  
+  if (stats.items === 0) {
+    throw new Error('Database appears to be empty or not properly initialized')
+  }
   
   // Get background image from IconService (using special_icons table)
   const bgImageBase64 = await IconService.getCollectionLogIcon()
@@ -115,9 +124,20 @@ export async function generateCollectionLogSVG(data) {
   }
   
   // Find item in database and get its icon
+  console.log(`🔍 Searching for item: "${data.itemName}"`)
   const itemData = await databaseService.searchItemsByNameOnly(data.itemName)
+  console.log(`🔍 Search results: ${itemData ? itemData.length : 'null'} items found`)
+  
   if (!itemData || itemData.length === 0) {
-    throw new Error(`Item not found: ${data.itemName}`)
+    // Try a broader search to help with debugging
+    console.log(`🔍 No exact match found, trying broader search...`)
+    const broaderResults = await databaseService.searchItemsByNameOnly('Leather body', 10)
+    console.log(`🔍 Broader search results: ${broaderResults.length} items found`)
+    broaderResults.forEach(item => {
+      console.log(`  - ${item.name} (ID: ${item.id})`)
+    })
+    
+    throw new Error(`Item not found: ${data.itemName}. Database contains ${stats.items} items. Please check the item name spelling or try a different item.`)
   }
   
   // Get the first matching item

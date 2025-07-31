@@ -137,11 +137,14 @@ class FileService {
     }
 
     try {
+      console.log(`🔍 FileService searching for: "${itemName}"`)
+      
       // Use database search functionality
       const searchResult = await OSRSDataService.searchItemsByName(itemName, 1)
       
       if (searchResult && searchResult.length > 0) {
         const item = searchResult[0]
+        console.log(`✅ Found item: ${item.name} (ID: ${item.id})`)
         
         // Cache the result
         cache.set(cacheKey, {
@@ -157,6 +160,8 @@ class FileService {
       const exactItem = await OSRSDataService.getItemByName(itemName)
       
       if (exactItem) {
+        console.log(`✅ Found item via exact lookup: ${exactItem.name} (ID: ${exactItem.id})`)
+        
         // Cache the result
         cache.set(cacheKey, {
           data: exactItem,
@@ -164,6 +169,16 @@ class FileService {
         })
         
         return exactItem
+      }
+      
+      // Try a broader search as a last resort
+      console.log(`🔍 Exact lookup failed, trying broader search...`)
+      const broaderResults = await OSRSDataService.searchItemsByName(itemName.split(' ')[0], 5)
+      if (broaderResults && broaderResults.length > 0) {
+        console.log(`🔍 Broader search found ${broaderResults.length} items:`)
+        broaderResults.forEach(item => {
+          console.log(`  - ${item.name} (ID: ${item.id})`)
+        })
       }
       
       throw new Error(`Item not found: ${itemName}`)

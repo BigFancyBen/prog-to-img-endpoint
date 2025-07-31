@@ -1,0 +1,14 @@
+{
+  "completed": true,
+  "timestamp": "2025-06-30T00:08:15.667Z",
+  "stats": {
+    "itemsProcessed": 24735,
+    "monstersProcessed": 3000,
+    "prayersProcessed": 29,
+    "equipmentProcessed": 3885,
+    "weaponsProcessed": 957,
+    "iconsProcessed": 0,
+    "totalDownloaded": 55326117,
+    "totalProcessed": 0
+  }
+}

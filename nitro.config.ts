@@ -14,6 +14,14 @@ export default defineNitroConfig({
     {
       baseURL: '/font',
       dir: './font'
+    },
+    {
+      baseURL: '/data',
+      dir: './data'
+    },
+    {
+      baseURL: '/',
+      dir: './public'
     }
   ],
   experimental: {

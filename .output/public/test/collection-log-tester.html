@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collection Log Tester</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            padding: 30px;
+        }
+        
+        .server-status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .server-status.online {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .server-status.offline {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .test-interface {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .form-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+            font-size: 1.1em;
+        }
+        
+        .form-group input {
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .quick-items {
+            margin-bottom: 20px;
+        }
+        
+        .quick-items h3 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        
+        .item-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .quick-item-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-item-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+        
+        .generate-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+        
+        .generate-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .results-section {
+            margin-top: 30px;
+        }
+        
+        .result-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 15px 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #6c757d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .image-result img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .json-result {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .error-result {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .success-result {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        
+        .loading::after {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .form-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Collection Log Tester</h1>
+            <p>Test arbitrary rare item collection log generation</p>
+        </div>
+        
+        <div class="main-content">
+            <div id="serverStatus" class="server-status">
+                <span>🔍 Checking server connection...</span>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalRequests">0</div>
+                    <div class="stat-label">Total Requests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="successRequests">0</div>
+                    <div class="stat-label">Successful</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="failedRequests">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgResponseTime">0ms</div>
+                    <div class="stat-label">Avg Response Time</div>
+                </div>
+            </div>
+            
+            <div class="test-interface">
+                <h2>🎯 Generate Collection Log</h2>
+                
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="itemName">Item Name:</label>
+                        <input type="text" id="itemName" placeholder="e.g., Dragon pickaxe, Jar of dirt" value="Dragon pickaxe">
+                    </div>
+                    <div class="form-group">
+                        <label for="userName">Player Name:</label>
+                        <input type="text" id="userName" placeholder="e.g., YourUsername" value="TestPlayer">
+                    </div>
+                </div>
+                
+                <div class="quick-items">
+                    <h3>🚀 Quick Test Items:</h3>
+                    <div class="item-buttons">
+                        <button class="quick-item-btn" onclick="setQuickItem('Dragon pickaxe')">Dragon pickaxe</button>
+                        <button class="quick-item-btn" onclick="setQuickItem('Jar of dirt')">Jar of dirt</button>
+                        <button class="quick-item-btn" onclick="setQuickItem('Pet kraken')">Pet kraken</button>
+                        <button class="quick-item-btn" onclick="setQuickItem('Twisted bow')">Twisted bow</button>
+                        <button class="quick-item-btn" onclick="setQuickItem('Scythe of vitur')">Scythe of vitur</button>
+                        <button class="quick-item-btn" onclick="setQuickItem('Third age platebody')">Third age platebody</button>
+                        <button class="quick-item-btn" onclick="setQuickItem('Bandos chestplate')">Bandos chestplate</button>
+                        <button class="quick-item-btn" onclick="setQuickItem('Armadyl crossbow')">Armadyl crossbow</button>
+                        <button class="quick-item-btn" onclick="setQuickItem('Elysian spirit shield')">Elysian spirit shield</button>
+                        <button class="quick-item-btn" onclick="setQuickItem('Dwarf cannon')">Dwarf cannon</button>
+                    </div>
+                </div>
+                
+                <button class="generate-btn" id="generateBtn" onclick="generateCollectionLog()">
+                    🎨 Generate Collection Log Image
+                </button>
+            </div>
+            
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <div class="result-tabs">
+                    <button class="tab-btn active" onclick="showTab('image')">🖼️ Generated Image</button>
+                    <button class="tab-btn" onclick="showTab('response')">📋 API Response</button>
+                    <button class="tab-btn" onclick="showTab('raw')">🔧 Raw Data</button>
+                </div>
+                
+                <div class="tab-content active" id="imageTab">
+                    <div id="imageResult" class="image-result"></div>
+                </div>
+                
+                <div class="tab-content" id="responseTab">
+                    <div id="responseResult" class="json-result"></div>
+                </div>
+                
+                <div class="tab-content" id="rawTab">
+                    <div id="rawResult" class="json-result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CollectionLogTester {
+            constructor() {
+                this.serverUrl = this.detectServerUrl();
+                this.stats = {
+                    total: 0,
+                    success: 0,
+                    failed: 0,
+                    responseTimes: []
+                };
+                this.init();
+            }
+
+            detectServerUrl() {
+                const currentHost = window.location.hostname;
+                const currentPort = window.location.port;
+                
+                if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+                    return `http://${currentHost}:3000`;
+                }
+                return `${window.location.protocol}//${window.location.host}`;
+            }
+
+            async init() {
+                await this.checkServerStatus();
+            }
+
+            async checkServerStatus() {
+                const statusEl = document.getElementById('serverStatus');
+                
+                try {
+                    const response = await axios.get(`${this.serverUrl}/`);
+                    statusEl.className = 'server-status online';
+                    statusEl.innerHTML = `
+                        <span>✅ Server Online</span>
+                        <small style="display: block; margin-top: 5px;">Connected to: ${this.serverUrl}</small>
+                    `;
+                } catch (error) {
+                    statusEl.className = 'server-status offline';
+                    statusEl.innerHTML = `
+                        <span>❌ Server Offline</span>
+                        <small style="display: block; margin-top: 5px;">Failed to connect to: ${this.serverUrl}</small>
+                    `;
+                }
+            }
+
+            updateStats() {
+                document.getElementById('totalRequests').textContent = this.stats.total;
+                document.getElementById('successRequests').textContent = this.stats.success;
+                document.getElementById('failedRequests').textContent = this.stats.failed;
+                
+                const avgTime = this.stats.responseTimes.length > 0 
+                    ? Math.round(this.stats.responseTimes.reduce((a, b) => a + b, 0) / this.stats.responseTimes.length)
+                    : 0;
+                document.getElementById('avgResponseTime').textContent = `${avgTime}ms`;
+            }
+
+            showLoading() {
+                const resultsSection = document.getElementById('resultsSection');
+                resultsSection.style.display = 'block';
+                
+                document.getElementById('imageResult').innerHTML = '<div class="loading">Generating collection log image...</div>';
+                document.getElementById('responseResult').innerHTML = '<div class="loading">Processing request...</div>';
+                document.getElementById('rawResult').innerHTML = '<div class="loading">Fetching data...</div>';
+                
+                document.getElementById('generateBtn').disabled = true;
+                document.getElementById('generateBtn').textContent = '⏳ Generating...';
+            }
+
+            hideLoading() {
+                document.getElementById('generateBtn').disabled = false;
+                document.getElementById('generateBtn').textContent = '🎨 Generate Collection Log Image';
+            }
+
+            showError(message, details = null) {
+                const resultsSection = document.getElementById('resultsSection');
+                resultsSection.style.display = 'block';
+                
+                const errorHtml = `
+                    <div class="error-result">
+                        <h4>❌ Error</h4>
+                        <p><strong>Message:</strong> ${message}</p>
+                        ${details ? `<p><strong>Details:</strong> ${details}</p>` : ''}
+                    </div>
+                `;
+                
+                document.getElementById('imageResult').innerHTML = errorHtml;
+                document.getElementById('responseResult').innerHTML = errorHtml;
+                document.getElementById('rawResult').innerHTML = errorHtml;
+            }
+
+            showSuccess(response, imageUrl, startTime) {
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                this.stats.responseTimes.push(responseTime);
+                
+                const resultsSection = document.getElementById('resultsSection');
+                resultsSection.style.display = 'block';
+                
+                // Image tab
+                if (imageUrl) {
+                    document.getElementById('imageResult').innerHTML = `
+                        <div class="success-result">
+                            <h4>✅ Collection Log Generated Successfully</h4>
+                            <p><strong>Response Time:</strong> ${responseTime}ms</p>
+                        </div>
+                        <img src="${imageUrl}" alt="Generated Collection Log" />
+                    `;
+                } else {
+                    document.getElementById('imageResult').innerHTML = `
+                        <div class="error-result">
+                            <h4>⚠️ No Image URL in Response</h4>
+                            <p>The API response did not contain an image URL.</p>
+                        </div>
+                    `;
+                }
+                
+                // Response tab
+                const cleanResponse = { ...response };
+                delete cleanResponse.imageBase64; // Remove base64 for readability
+                
+                document.getElementById('responseResult').innerHTML = `
+                    <div class="success-result">
+                        <h4>✅ API Response (Base64 data removed for readability)</h4>
+                        <p><strong>Response Time:</strong> ${responseTime}ms</p>
+                    </div>
+                    ${JSON.stringify(cleanResponse, null, 2)}
+                `;
+                
+                // Raw tab
+                document.getElementById('rawResult').innerHTML = JSON.stringify(response, null, 2);
+            }
+
+            async generateCollectionLog() {
+                const itemName = document.getElementById('itemName').value.trim();
+                const userName = document.getElementById('userName').value.trim();
+                
+                if (!itemName || !userName) {
+                    alert('Please enter both item name and player name');
+                    return;
+                }
+                
+                this.showLoading();
+                const startTime = Date.now();
+                this.stats.total++;
+                
+                try {
+                    const response = await axios.post(`${this.serverUrl}/api/collection-log`, {
+                        itemName: itemName,
+                        userName: userName
+                    });
+                    
+                    this.stats.success++;
+                    
+                    // Handle different response formats
+                    let responseData = response.data;
+                    let imageUrl = null;
+                    
+                    // Case 1: Direct base64 string in body
+                    if (responseData.body && typeof responseData.body === 'string') {
+                        if (responseData.body.startsWith('"data:image/')) {
+                            // Remove quotes from JSON string
+                            imageUrl = responseData.body.slice(1, -1);
+                        } else if (responseData.body.startsWith('data:image/')) {
+                            imageUrl = responseData.body;
+                        } else {
+                            try {
+                                const parsed = JSON.parse(responseData.body);
+                                responseData = parsed;
+                                if (parsed.imageUrl) {
+                                    imageUrl = parsed.imageUrl;
+                                } else if (parsed.imageBase64) {
+                                    imageUrl = `data:image/png;base64,${parsed.imageBase64}`;
+                                }
+                            } catch (e) {
+                                // Keep original responseData
+                            }
+                        }
+                    }
+                    // Case 2: Direct response with imageUrl or imageBase64
+                    else if (responseData.imageUrl) {
+                        imageUrl = responseData.imageUrl;
+                    } else if (responseData.imageBase64) {
+                        imageUrl = `data:image/png;base64,${responseData.imageBase64}`;
+                    }
+                    // Case 3: Direct base64 data URL
+                    else if (typeof responseData === 'string' && responseData.startsWith('data:image/')) {
+                        imageUrl = responseData;
+                    }
+                    
+                    this.showSuccess(responseData, imageUrl, startTime);
+                    
+                } catch (error) {
+                    this.stats.failed++;
+                    
+                    let errorMessage = 'Unknown error occurred';
+                    let errorDetails = null;
+                    
+                    if (error.response) {
+                        errorMessage = error.response.data?.message || error.response.statusText || 'Server error';
+                        errorDetails = JSON.stringify(error.response.data, null, 2);
+                    } else if (error.request) {
+                        errorMessage = 'No response from server';
+                        errorDetails = 'Check if the server is running and accessible';
+                    } else {
+                        errorMessage = error.message;
+                    }
+                    
+                    this.showError(errorMessage, errorDetails);
+                }
+                
+                this.hideLoading();
+                this.updateStats();
+            }
+        }
+
+        // Global functions for UI interactions
+        function setQuickItem(itemName) {
+            document.getElementById('itemName').value = itemName;
+        }
+
+        function showTab(tabName) {
+            // Remove active class from all tabs and contents
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab and content
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        function generateCollectionLog() {
+            window.tester.generateCollectionLog();
+        }
+
+        // Allow Enter key to trigger generation
+        document.addEventListener('DOMContentLoaded', function() {
+            window.tester = new CollectionLogTester();
+            
+            document.getElementById('itemName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    generateCollectionLog();
+                }
+            });
+            
+            document.getElementById('userName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    generateCollectionLog();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

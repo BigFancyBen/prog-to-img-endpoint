@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Items API - OSRS API Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .back-link {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        
+        .back-link:hover { color: white; }
+        
+        h1 { font-size: 2.2rem; margin-bottom: 10px; }
+        .method { 
+            background: rgba(255,255,255,0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-right: 10px;
+        }
+        
+        .endpoint-path {
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 1rem;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #007bff;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 8px;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .try-it-btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 10px 5px 10px 0;
+        }
+        
+        .try-it-btn:hover {
+            background: #0056b3;
+        }
+        
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+            background: #d1ecf1;
+        }
+        
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .parameter {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+            border-left: 3px solid #6c757d;
+        }
+        
+        .param-name {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .param-type {
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+        
+        .param-desc {
+            margin-top: 5px;
+            color: #6c757d;
+        }
+        
+        .endpoint-variant {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="back-link">← Back to API Documentation</a>
+            <h1>
+                <span class="method">GET</span>
+                Items Database
+            </h1>
+            <div class="endpoint-path">/osrs/items</div>
+            <p>Browse and search the complete OSRS items database with pagination and filtering.</p>
+        </header>
+        
+        <div class="section">
+            <h2>📋 Query Parameters</h2>
+            
+            <div class="parameter">
+                <div class="param-name">page <span class="param-type">number</span></div>
+                <div class="param-desc">Page number for pagination (default: 1)</div>
+            </div>
+            
+            <div class="parameter">
+                <div class="param-name">max_results <span class="param-type">number</span></div>
+                <div class="param-desc">Maximum results per page (default: 25, max: 100)</div>
+            </div>
+            
+            <div class="parameter">
+                <div class="param-name">where <span class="param-type">JSON string</span></div>
+                <div class="param-desc">SQL-like filtering conditions</div>
+                <div class="code-block">?where={"name":"iron","members":true}</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🔗 Related Endpoints</h2>
+            
+            <div class="endpoint-variant">
+                <strong>GET /osrs/items/{id}</strong> - Get specific item by ID
+                <br><span style="color: #6c757d;">Example: /osrs/items/17</span>
+            </div>
+            
+            <div class="endpoint-variant">
+                <strong>GET /osrs/search/items?q={query}</strong> - Search items by name
+                <br><span style="color: #6c757d;">Example: /osrs/search/items?q=iron sword</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📤 Example Requests</h2>
+            
+            <h3>Basic List (First 5 items)</h3>
+            <div class="code-block">GET /osrs/items?max_results=5</div>
+            <button class="try-it-btn" onclick="tryRequest('/osrs/items?max_results=5')">🧪 Try Basic List</button>
+            
+            <h3>Specific Item by ID</h3>
+            <div class="code-block">GET /osrs/items/17</div>
+            <button class="try-it-btn" onclick="tryRequest('/osrs/items/17')">🧪 Try Item by ID</button>
+            
+            <h3>Search Items</h3>
+            <div class="code-block">GET /osrs/search/items?q=iron</div>
+            <button class="try-it-btn" onclick="tryRequest('/osrs/search/items?q=iron')">🧪 Try Search</button>
+            
+            <div id="result"></div>
+        </div>
+        
+        <div class="section">
+            <h2>📥 Response Format</h2>
+            
+            <h3>Items List Response</h3>
+            <div class="code-block">{
+  "items": [
+    {
+      "id": 17,
+      "name": "Grail bell",
+      "examine": "I wonder what happens when I ring it?",
+      "wiki_name": "Grail bell",
+      "wiki_url": "https://oldschool.runescape.wiki/w/Grail%20bell",
+      "icon_path": "17.png",
+      "members": false,
+      "tradeable": false,
+      "stackable": false,
+      "noted": false,
+      "noteable": false,
+      "linked_id_item": null,
+      "linked_id_noted": null,
+      "linked_id_placeholder": null,
+      "placeholder": false,
+      "equipable": false,
+      "equipable_by_player": false,
+      "equipable_weapon": false,
+      "cost": 1,
+      "lowalch": 0,
+      "highalch": 0,
+      "weight": 0.001,
+      "buy_limit": null,
+      "quest_item": true,
+      "release_date": "2001-04-06",
+      "duplicate": false,
+      "incomplete": false,
+      "last_updated": "2024-12-20T07:15:33.000Z",
+      "created_at": "2024-12-20T07:15:33.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "maxResults": 5,
+    "total": 453,
+    "totalPages": 91
+  }
+}</div>
+            
+            <h3>Single Item Response</h3>
+            <div class="code-block">{
+  "id": 17,
+  "name": "Grail bell",
+  "examine": "I wonder what happens when I ring it?",
+  "wiki_name": "Grail bell",
+  "wiki_url": "https://oldschool.runescape.wiki/w/Grail%20bell",
+  "icon_path": "17.png",
+  "members": false,
+  "tradeable": false,
+  "stackable": false,
+  "noted": false,
+  "noteable": false,
+  "linked_id_item": null,
+  "linked_id_noted": null,
+  "linked_id_placeholder": null,
+  "placeholder": false,
+  "equipable": false,
+  "equipable_by_player": false,
+  "equipable_weapon": false,
+  "cost": 1,
+  "lowalch": 0,
+  "highalch": 0,
+  "weight": 0.001,
+  "buy_limit": null,
+  "quest_item": true,
+  "release_date": "2001-04-06",
+  "duplicate": false,
+  "incomplete": false,
+  "last_updated": "2024-12-20T07:15:33.000Z",
+  "created_at": "2024-12-20T07:15:33.000Z"
+}</div>
+        </div>
+        
+        <div class="section">
+            <h2>🏷️ Item Properties</h2>
+            <ul style="margin: 15px 0 15px 20px; columns: 2; column-gap: 30px;">
+                <li><strong>id</strong> - Unique item identifier</li>
+                <li><strong>name</strong> - Item display name</li>
+                <li><strong>examine</strong> - In-game examine text</li>
+                <li><strong>wiki_name</strong> - Wiki page name</li>
+                <li><strong>wiki_url</strong> - Full wiki URL</li>
+                <li><strong>icon_path</strong> - Icon file path</li>
+                <li><strong>members</strong> - Members-only item</li>
+                <li><strong>tradeable</strong> - Can be traded</li>
+                <li><strong>stackable</strong> - Stacks in inventory</li>
+                <li><strong>noted</strong> - Is noted version</li>
+                <li><strong>noteable</strong> - Can be noted</li>
+                <li><strong>equipable</strong> - Can be equipped</li>
+                <li><strong>cost</strong> - Shop/NPC cost</li>
+                <li><strong>lowalch</strong> - Low alchemy value</li>
+                <li><strong>highalch</strong> - High alchemy value</li>
+                <li><strong>weight</strong> - Item weight (kg)</li>
+                <li><strong>quest_item</strong> - Quest-related item</li>
+                <li><strong>release_date</strong> - Release date</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>⚠️ Error Responses</h2>
+            <h3>404 - Item Not Found</h3>
+            <div class="code-block">{
+  "error": true,
+  "statusCode": 404,
+  "message": "Item with ID 999999 not found"
+}</div>
+            
+            <h3>400 - Invalid Parameters</h3>
+            <div class="code-block">{
+  "error": true,
+  "statusCode": 400,
+  "message": "Invalid page number"
+}</div>
+        </div>
+    </div>
+    
+    <script>
+        async function tryRequest(endpoint) {
+            const resultDiv = document.getElementById('result');
+            const buttons = document.querySelectorAll('.try-it-btn');
+            
+            buttons.forEach(btn => {
+                btn.textContent = btn.textContent.replace('🧪', '⏳');
+                btn.disabled = true;
+            });
+            
+            try {
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result';
+                    resultDiv.innerHTML = `
+                        <h4>✅ Success - ${endpoint}</h4>
+                        <pre style="font-size: 0.8rem; overflow-x: auto; max-height: 400px; overflow-y: auto;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h4>❌ Error ${response.status} - ${endpoint}</h4>
+                        <pre style="font-size: 0.8rem;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h4>❌ Network Error - ${endpoint}</h4>
+                    <p>${error.message}</p>
+                `;
+            }
+            
+            buttons.forEach(btn => {
+                btn.textContent = btn.textContent.replace('⏳', '🧪');
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
