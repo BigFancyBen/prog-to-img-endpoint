@@ -4208,7 +4208,7 @@ const assets = {
   "/index.html": {
     "type": "text/html; charset=utf-8",
     "etag": "\"2c73-HpO5mzya+QmQB6Qk1f0TUYuUCkY\"",
-    "mtime": "2025-07-31T22:36:32.938Z",
+    "mtime": "2025-07-31T22:37:02.305Z",
     "size": 11379,
     "path": "../public/index.html"
   },
@@ -4256,16 +4256,16 @@ const assets = {
   },
   "/data/osrs.db-shm": {
     "type": "text/plain; charset=utf-8",
-    "etag": "\"8000-YI7rdIgEJFPJykD34TmPwaJw8/Q\"",
-    "mtime": "2025-07-31T22:35:55.470Z",
+    "etag": "\"8000-SqVljUS+Fq96QfHXJD1YDBQLvK0\"",
+    "mtime": "2025-07-31T20:54:47.769Z",
     "size": 32768,
     "path": "../public/data/osrs.db-shm"
   },
   "/data/osrs.db-wal": {
     "type": "text/plain; charset=utf-8",
-    "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
-    "mtime": "2025-07-31T20:58:44.648Z",
-    "size": 0,
+    "etag": "\"20320-IdugCdbuB4P0HqHEdLZ35Ft1UVM\"",
+    "mtime": "2025-07-31T20:52:11.748Z",
+    "size": 131872,
     "path": "../public/data/osrs.db-wal"
   },
   "/data/wiki-checkpoint.json": {
@@ -4281,20 +4281,6 @@ const assets = {
     "mtime": "2025-07-23T05:14:17.710Z",
     "size": 1235,
     "path": "../public/data/wiki-icons-checkpoint.json"
-  },
-  "/font/runescape.ttf": {
-    "type": "font/ttf",
-    "etag": "\"37a8-H+uLKLjAWQS8z/4bBxweWv6wUkI\"",
-    "mtime": "2025-06-30T00:45:10.329Z",
-    "size": 14248,
-    "path": "../public/font/runescape.ttf"
-  },
-  "/font/runescape_chat.ttf": {
-    "type": "font/ttf",
-    "etag": "\"8e30-HjlH00zcqcuPSYDr/Pnaf7qRh7s\"",
-    "mtime": "2025-07-31T18:09:09.000Z",
-    "size": 36400,
-    "path": "../public/font/runescape_chat.ttf"
   },
   "/icons/agility.png": {
     "type": "image/png",
@@ -4464,6 +4450,20 @@ const assets = {
     "size": 233,
     "path": "../public/icons/woodcutting.png"
   },
+  "/font/runescape.ttf": {
+    "type": "font/ttf",
+    "etag": "\"37a8-H+uLKLjAWQS8z/4bBxweWv6wUkI\"",
+    "mtime": "2025-06-30T00:45:10.329Z",
+    "size": 14248,
+    "path": "../public/font/runescape.ttf"
+  },
+  "/font/runescape_chat.ttf": {
+    "type": "font/ttf",
+    "etag": "\"8e30-HjlH00zcqcuPSYDr/Pnaf7qRh7s\"",
+    "mtime": "2025-07-31T18:09:09.000Z",
+    "size": 36400,
+    "path": "../public/font/runescape_chat.ttf"
+  },
   "/test/all-items-display-dynamic.html": {
     "type": "text/html; charset=utf-8",
     "etag": "\"425b-2RYGjnrSrdVWPGoj2b7JgiKWbhQ\"",
@@ -4513,6 +4513,13 @@ const assets = {
     "size": 21015,
     "path": "../public/test/test.html"
   },
+  "/data/processed/summary.json": {
+    "type": "application/json",
+    "etag": "\"14a-eZ+woDImQ0i2EpxXlDgsd0fIzeo\"",
+    "mtime": "2025-07-26T00:51:11.277Z",
+    "size": 330,
+    "path": "../public/data/processed/summary.json"
+  },
   "/data/cache/items-complete.json": {
     "type": "application/json",
     "etag": "\"2917b24-WuiaxX5zQb6tP+GQQn7ABJ0F8UM\"",
@@ -4547,13 +4554,6 @@ const assets = {
     "mtime": "2025-06-30T01:05:25.783Z",
     "size": 2,
     "path": "../public/data/cache/wiki-items.json"
-  },
-  "/data/processed/summary.json": {
-    "type": "application/json",
-    "etag": "\"14a-eZ+woDImQ0i2EpxXlDgsd0fIzeo\"",
-    "mtime": "2025-07-26T00:51:11.277Z",
-    "size": 330,
-    "path": "../public/data/processed/summary.json"
   },
   "/data/streaming/items-stream.jsonl": {
     "type": "text/plain; charset=utf-8",

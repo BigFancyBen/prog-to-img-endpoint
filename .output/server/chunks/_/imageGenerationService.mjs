@@ -365,7 +365,7 @@ async function generateCollectionLogSVG(data) {
       .title-text { font-size: 25px; text-anchor: middle; }
       .date-text { font-size: 16px; text-anchor: middle; }
       .item-text { font-size: 22px; text-anchor: middle; }
-      .examine-item-text { font-size: 14px; text-anchor: middle; font-family: 'Runescape Chat', 'RuneScape UF', 'Runescape', monospace; }
+      .examine-item-text { font-size: 14px; text-anchor: middle; font-family: 'Runescape Chat', 'RuneScape UF', 'Runescape', monospace; font-style: italic; }
       .small-date-text { font-size: 12px; text-anchor: end; }
     </style>
   </defs>`;
@@ -386,7 +386,10 @@ async function generateCollectionLogSVG(data) {
     const lineHeight = 13;
     lines.forEach((line, index) => {
       const lineY = examineY + index * lineHeight;
-      svg += `<text x="${WIDTH / 2}" y="${lineY}" class="examine-text examine-item-text" style="font-family: 'Runescape Chat', 'RuneScape UF', 'Runescape', monospace;">${escapeXML(line)}</text>`;
+      const skewOffset = line.length * 7 * 0.1 / 2;
+      const additionalOffset = 40;
+      const adjustedX = WIDTH / 2 + skewOffset + additionalOffset;
+      svg += `<text x="${adjustedX}" y="${lineY}" class="examine-text examine-item-text" style="font-family: 'Runescape Chat', 'RuneScape UF', 'Runescape', monospace; transform: skewX(-10deg);">${escapeXML(line)}</text>`;
     });
   }
   svg += "</svg>";
