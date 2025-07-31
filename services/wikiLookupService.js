@@ -147,6 +147,56 @@ class WikiLookupService {
   }
 
   /**
+   * Look up an item by its wiki page name (from the authoritative mapping)
+   */
+  async lookupItemByWikiPage(wikiPageName, expectedId = null) {
+    try {
+      console.log(`🔍 Looking up wiki page "${wikiPageName}" for item ID ${expectedId}...`)
+      
+      // Decode URL-encoded page name
+      const decodedPageName = decodeURIComponent(wikiPageName)
+      
+      // Extract all versions from the wiki page
+      const itemVersions = await this.extractAllVersionsFromPage(decodedPageName)
+      
+      if (itemVersions.length === 0) {
+        console.log(`❌ No item data found on wiki page "${decodedPageName}"`)
+        return null
+      }
+      
+      // If we have an expected ID, try to find the exact match
+      if (expectedId !== null) {
+        const exactMatch = itemVersions.find(item => item.id === expectedId)
+        if (exactMatch) {
+          console.log(`✅ Found exact match: ${exactMatch.name} (ID: ${exactMatch.id})`)
+          
+          // Save all versions to the database
+          for (const version of itemVersions) {
+            await this.addItemToDatabase(version)
+          }
+          
+          return exactMatch
+        }
+      }
+      
+      // If no exact match or no expected ID, use the first version
+      const firstItem = itemVersions[0]
+      console.log(`✅ Found item: ${firstItem.name} (ID: ${firstItem.id}) with ${itemVersions.length} versions`)
+      
+      // Save all versions to the database
+      for (const version of itemVersions) {
+        await this.addItemToDatabase(version)
+      }
+      
+      return firstItem
+      
+    } catch (error) {
+      console.error(`❌ Error looking up wiki page "${wikiPageName}":`, error.message)
+      return null
+    }
+  }
+
+  /**
    * Search for pages containing a specific item ID
    */
   async searchForItemId(itemId) {
@@ -198,13 +248,17 @@ class WikiLookupService {
 
       const parser = new WikitextParser(wikitext)
       
-      // Try to find any infobox with item-like properties
+      // Try to find any infobox with item-like properties (case insensitive)
       let hasInfobox = false
       
       if (parser.extractInfobox('infobox item') || 
+          parser.extractInfobox('Infobox Item') ||
           parser.extractInfobox('infobox pet') ||
+          parser.extractInfobox('Infobox Pet') ||
           parser.extractInfobox('item') ||
-          parser.extractInfobox('pet')) {
+          parser.extractInfobox('Item') ||
+          parser.extractInfobox('pet') ||
+          parser.extractInfobox('Pet')) {
         hasInfobox = true
       }
       
@@ -244,7 +298,7 @@ class WikiLookupService {
         if (iconUrl) {
           // Download and cache the icon in database using item ID as filename
           const iconFileName = `${id}.png`
-          const iconResult = await this.downloadIcon(iconUrl, iconFileName, id)
+          const iconResult = await this.downloadIcon(iconUrl, iconFileName, id, pageTitle, pageTitle)
           if (iconResult && iconResult.buffer) {
             localIconPath = iconResult.fileName
             // Store the icon buffer for later database insertion
@@ -341,13 +395,17 @@ class WikiLookupService {
 
       const parser = new WikitextParser(wikitext)
       
-      // Try to find any infobox with item-like properties
+      // Try to find any infobox with item-like properties (case insensitive)
       let hasInfobox = false
       
       if (parser.extractInfobox('infobox item') || 
+          parser.extractInfobox('Infobox Item') ||
           parser.extractInfobox('infobox pet') ||
+          parser.extractInfobox('Infobox Pet') ||
           parser.extractInfobox('item') ||
-          parser.extractInfobox('pet')) {
+          parser.extractInfobox('Item') ||
+          parser.extractInfobox('pet') ||
+          parser.extractInfobox('Pet')) {
         hasInfobox = true
       }
       
@@ -493,7 +551,11 @@ class WikiLookupService {
         if (iconUrl) {
           // Download and cache the icon in database using item ID as filename
           const iconFileName = `${id}.png`
-          const iconResult = await this.downloadIcon(iconUrl, iconFileName, id)
+          const itemName = InfoboxCleaner.clean(getName('name'), 'string') || 
+                           (versionNum ? `${pageTitle} ${versionNum}` : pageTitle)
+          // For intelligent pattern generation, use the extracted icon filename instead of generic item name
+          const iconNameForPattern = iconFilename || itemName
+          const iconResult = await this.downloadIcon(iconUrl, iconFileName, id, iconNameForPattern, pageTitle)
           if (iconResult && iconResult.buffer) {
             localIconPath = iconResult.fileName
             // Store the icon buffer for later database insertion
@@ -586,9 +648,164 @@ class WikiLookupService {
    * Download icon for a newly found item
    */
   /**
-   * Download and cache an icon file in database with MediaWiki URL format handling
+   * Get intelligent wiki image names by parsing the actual wiki page
    */
-  async downloadIcon(iconUrl, fileName, itemId) {
+  async getWikiImageNames(itemName) {
+    try {
+      const wikiUrl = `https://oldschool.runescape.wiki/w/${encodeURIComponent(itemName.replace(/ /g, '_'))}`;
+      console.log(`    🔍 Parsing wiki page: ${wikiUrl}`);
+      
+      const response = await fetch(wikiUrl);
+      if (!response.ok) {
+        return [];
+      }
+      
+      const html = await response.text();
+      const imageNames = new Set();
+      
+      // Pattern 1: Infobox images (most reliable for item icons)
+      const infoboxMatches = html.match(/class="[^"]*infobox[^"]*"[^>]*>[\s\S]*?src="[^"]*\/images\/([^"\/]+\.png)"/gi);
+      if (infoboxMatches) {
+        infoboxMatches.forEach(match => {
+          const filename = match.match(/\/images\/([^"\/]+\.png)/i)?.[1];
+          if (filename && this.isRelevantImage(filename, itemName)) {
+            imageNames.add(decodeURIComponent(filename.replace(/_/g, ' ').replace('.png', '')));
+          }
+        });
+      }
+      
+      // Pattern 2: File: links that contain the item name
+      const fileMatches = html.match(/File:([^|\]]+\.png)/gi);
+      if (fileMatches) {
+        fileMatches.forEach(match => {
+          const filename = match.replace(/^File:/i, '').replace('.png', '');
+          if (this.isRelevantImage(filename + '.png', itemName)) {
+            imageNames.add(decodeURIComponent(filename.replace(/_/g, ' ')));
+          }
+        });
+      }
+      
+      return Array.from(imageNames);
+    } catch (error) {
+      console.log(`    ❌ Error parsing wiki page: ${error.message}`);
+      return [];
+    }
+  }
+
+  isRelevantImage(filename, itemName) {
+    const filenameLower = filename.toLowerCase();
+    
+    // Exclude common non-item images
+    const excludePatterns = [
+      'creative_commons', 'footer', 'logo', 'icon_external', 'edit', 'discord',
+      'arrow', 'button', 'background', 'banner', 'header', 'navigation',
+      'wiki', 'search', 'menu', 'ui_', 'interface', 'chat', 'cursor'
+    ];
+    
+    if (excludePatterns.some(pattern => filenameLower.includes(pattern))) {
+      return false;
+    }
+    
+    // Include if it's clearly an inventory/detail image
+    if (filenameLower.includes('_detail.png') || filenameLower.includes('_inventory')) {
+      return true;
+    }
+    
+    // Include if filename contains key parts of item name
+    const itemKeywords = itemName.toLowerCase().split(' ').filter(word => word.length > 2);
+    return itemKeywords.some(keyword => filenameLower.includes(keyword));
+  }
+
+  /**
+   * Get alternate names using enhanced patterns
+   */
+  getAlternateNames(itemName) {
+    const alternates = [];
+    
+    // Manual mappings for known edge cases
+    const manualMappings = {
+      'Grinder': ['Pestle and mortar'],
+      'Golden bowl': ['Golden bowl (water)', 'Gold bowl', 'Blessed gold bowl'],
+      'Broken shield': ['Broken shield (Hero\'s Quest)', 'Broken shield (Heroes\' Quest)'],
+      'Twigs': ['Twig'],
+      // Food items with variant patterns
+      'Meat pie': ['Meat pie#Full'],
+      'Half a meat pie': ['Meat pie#Half'],
+      'Apple pie': ['Apple pie#Full'],
+      'Half an apple pie': ['Apple pie#Half'],
+      'Redberry pie': ['Redberry pie#Full'],
+      'Half a redberry pie': ['Redberry pie#Half'],
+      'Plain pizza': ['Plain pizza#Full'],
+      '1/2 plain pizza': ['Plain pizza#Half'],
+      'Meat pizza': ['Meat pizza#Full'],
+      '1/2 meat pizza': ['Meat pizza#Half'],
+      'Anchovy pizza': ['Anchovy pizza#Full'],
+      '1/2 anchovy pizza': ['Anchovy pizza#Half'],
+      'Pineapple pizza': ['Pineapple pizza#Full'],
+      '1/2 pineapple pizza': ['Pineapple pizza#Half'],
+      // Cocktail variants
+      'Unfinished cocktail': ['Pineapple punch', 'Fruit blast', 'Wizard blizzard', 'Short green guy', 'Drunk dragon'],
+      'Odd cocktail': ['Barbarian herblore', 'Relicym\'s balm']
+    };
+    
+    if (manualMappings[itemName]) {
+      alternates.push(...manualMappings[itemName]);
+    }
+    
+    // Handle variant items with # symbols
+    if (itemName.includes('#')) {
+      // For items like "Meat pie#Full" try just "Meat pie"
+      const baseName = itemName.split('#')[0].trim();
+      alternates.push(baseName);
+    } else {
+      // For items like "Meat pie" try variant forms
+      alternates.push(`${itemName}#Full`);
+      alternates.push(`${itemName}#Half`);
+      
+      // Try common half/partial patterns
+      if (itemName.startsWith('Half ')) {
+        const fullName = itemName.replace('Half ', '').replace('a ', '').replace('an ', '');
+        alternates.push(`${fullName}#Half`);
+        alternates.push(`${fullName}#Full`);
+      }
+      
+      if (itemName.startsWith('1/2 ')) {
+        const fullName = itemName.replace('1/2 ', '');
+        alternates.push(`${fullName}#Half`);
+        alternates.push(`${fullName}#Full`);
+      }
+    }
+    
+    // Pet variations
+    if (itemName.startsWith('Pet ')) {
+      const petType = itemName.substring(4);
+      const colors = ['white', 'black', 'brown', 'grey', 'red', 'blue', 'green'];
+      const colorCombinations = ['grey and black', 'grey and brown', 'brown and white'];
+      
+      colors.forEach(color => {
+        alternates.push(`${petType} (${color})`);
+      });
+      
+      colorCombinations.forEach(combo => {
+        alternates.push(`${petType} (${combo})`);
+      });
+    }
+    
+    // Common equipment states
+    const commonStates = ['(uncharged)', '(charged)', '(p)', '(p+)', '(p++)', '(noted)', '(e)'];
+    commonStates.forEach(state => {
+      if (!itemName.includes(state)) {
+        alternates.push(`${itemName} ${state}`);
+      }
+    });
+    
+    return [...new Set(alternates)].filter(name => name !== itemName);
+  }
+
+  /**
+   * Download and cache an icon file in database with enhanced intelligent patterns
+   */
+  async downloadIcon(iconUrl, fileName, itemId, itemName = null, wikiPageTitle = null) {
     if (!iconUrl || !fileName || !itemId) return null
     
     try {
@@ -597,51 +814,106 @@ class WikiLookupService {
         return fileName // Icon already exists in database
       }
       
-      console.log(`📥 Downloading icon: ${fileName} for item ${itemId}`)
+      console.log(`📥 Enhanced download for: ${fileName} (item ${itemId})`)
       
-      // Extract base name from iconUrl for MediaWiki format variations
-      let urlBaseName = iconUrl.includes('/images/') ? 
-        iconUrl.split('/images/')[1].replace(/\.(png|gif|jpg|jpeg)$/i, '') : 
-        fileName.replace(/\.(png|gif|jpg|jpeg)$/i, '')
-      
-      // Decode URL encoding to get clean filename
-      urlBaseName = decodeURIComponent(urlBaseName)
-      
-      // Try multiple MediaWiki naming conventions
-      const urlVariations = [
-        `https://oldschool.runescape.wiki/images/${urlBaseName.replace(/ /g, '_')}.png`, // Underscores first (OSRS Wiki standard)
-        iconUrl, // Original URL
-        `https://oldschool.runescape.wiki/images/${urlBaseName}.png`,
-        `https://oldschool.runescape.wiki/images/${urlBaseName.replace(/ /g, '%20')}.png`,
-        `https://oldschool.runescape.wiki/images/${encodeURIComponent(urlBaseName)}.png`
-      ]
-      
-      // Remove duplicates while preserving order
-      const uniqueUrls = [...new Set(urlVariations)]
-      
-      for (let i = 0; i < uniqueUrls.length; i++) {
-        const tryUrl = uniqueUrls[i]
-        console.log(`  Trying URL ${i + 1}/${uniqueUrls.length}: ${tryUrl}`)
+      // If we have item name, use intelligent patterns
+      if (itemName) {
+        console.log(`  🧠 Using intelligent patterns for: ${itemName}`)
+        const pageForParsing = wikiPageTitle || itemName
+        const wikiImageNames = await this.getWikiImageNames(pageForParsing);
+        const alternateNames = this.getAlternateNames(itemName);
         
-        const iconBuffer = await this.downloadIconFromUrl(tryUrl)
-        if (iconBuffer) {
-          console.log(`  ✅ Success with URL format: ${tryUrl}`)
+        // Build comprehensive URL patterns
+        const urlPatterns = [
+          // Basic patterns
+          `https://oldschool.runescape.wiki/images/${itemName.replace(/ /g, '_')}.png`,
+          `https://oldschool.runescape.wiki/images/${itemName.replace(/ /g, '_')}_detail.png`,
+          `https://oldschool.runescape.wiki/images/${itemId}.png`,
           
-          // Return both the filename and the buffer data
-          return {
-            fileName: fileName,
-            buffer: iconBuffer,
-            url: tryUrl
+          // Special patterns for food items with fractions (1/2 -> 1-2)
+          `https://oldschool.runescape.wiki/images/${itemName.replace(/\//g, '-').replace(/ /g, '_')}.png`,
+          `https://oldschool.runescape.wiki/images/${itemName.replace(/\//g, '-').replace(/ /g, '_')}_detail.png`,
+          
+          // Intelligent names from wiki page parsing
+          ...wikiImageNames.map(name => `https://oldschool.runescape.wiki/images/${name.replace(/ /g, '_')}.png`),
+          ...wikiImageNames.map(name => `https://oldschool.runescape.wiki/images/${name.replace(/ /g, '_')}_detail.png`),
+          
+          // Manual alternate names
+          ...alternateNames.map(altName => `https://oldschool.runescape.wiki/images/${altName.replace(/ /g, '_')}.png`),
+          ...alternateNames.map(altName => `https://oldschool.runescape.wiki/images/${altName.replace(/ /g, '_')}_detail.png`),
+          
+          // Alternate names with slash-to-hyphen conversion
+          ...alternateNames.map(altName => `https://oldschool.runescape.wiki/images/${altName.replace(/\//g, '-').replace(/ /g, '_')}.png`),
+          ...alternateNames.map(altName => `https://oldschool.runescape.wiki/images/${altName.replace(/\//g, '-').replace(/ /g, '_')}_detail.png`),
+          
+          // Original URL patterns (fallback)
+          iconUrl,
+          `https://oldschool.runescape.wiki/images/${fileName.replace(/\.(png|gif|jpg|jpeg)$/i, '').replace(/ /g, '_')}.png`,
+          `https://oldschool.runescape.wiki/images/${encodeURIComponent(fileName.replace(/\.(png|gif|jpg|jpeg)$/i, ''))}.png`
+        ];
+        
+        const uniqueUrls = [...new Set(urlPatterns)];
+        console.log(`  📊 Generated ${uniqueUrls.length} intelligent URL patterns`);
+        
+        for (let i = 0; i < uniqueUrls.length; i++) {
+          const tryUrl = uniqueUrls[i]
+          
+          const iconBuffer = await this.downloadIconFromUrl(tryUrl)
+          if (iconBuffer) {
+            console.log(`  ✅ Success with intelligent pattern: ${tryUrl}`)
+            
+            return {
+              fileName: fileName,
+              buffer: iconBuffer,
+              url: tryUrl
+            }
+          }
+          
+          // Small delay between attempts
+          if (i < uniqueUrls.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500))
           }
         }
+      } else {
+        console.log(`  📋 Using basic patterns (no item name provided)`)
+        // Fall back to basic patterns if no item name provided
+        let urlBaseName = iconUrl.includes('/images/') ? 
+          iconUrl.split('/images/')[1].replace(/\.(png|gif|jpg|jpeg)$/i, '') : 
+          fileName.replace(/\.(png|gif|jpg|jpeg)$/i, '')
         
-        // Small delay between attempts
-        if (i < uniqueUrls.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000))
+        urlBaseName = decodeURIComponent(urlBaseName)
+        
+        const urlVariations = [
+          `https://oldschool.runescape.wiki/images/${urlBaseName.replace(/ /g, '_')}.png`,
+          iconUrl,
+          `https://oldschool.runescape.wiki/images/${urlBaseName}.png`,
+          `https://oldschool.runescape.wiki/images/${urlBaseName.replace(/ /g, '%20')}.png`,
+          `https://oldschool.runescape.wiki/images/${encodeURIComponent(urlBaseName)}.png`
+        ]
+        
+        const uniqueUrls = [...new Set(urlVariations)]
+        
+        for (let i = 0; i < uniqueUrls.length; i++) {
+          const tryUrl = uniqueUrls[i]
+          
+          const iconBuffer = await this.downloadIconFromUrl(tryUrl)
+          if (iconBuffer) {
+            console.log(`  ✅ Success with basic pattern: ${tryUrl}`)
+            
+            return {
+              fileName: fileName,
+              buffer: iconBuffer,
+              url: tryUrl
+            }
+          }
+          
+          if (i < uniqueUrls.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000))
+          }
         }
       }
       
-      console.log(`  ❌ All URL formats failed for: ${fileName}`)
+      console.log(`  ❌ All URL patterns failed for: ${fileName}`)
       return null // All download attempts failed
     } catch (error) {
       console.warn(`⚠️  Error downloading icon ${fileName}:`, error.message)

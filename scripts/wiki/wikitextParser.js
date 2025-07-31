@@ -474,8 +474,11 @@ export class WikitextParser {
     const cleanFilename = this.cleanIconFilename(filename)
     if (!cleanFilename) return null
     
+    // Convert spaces to underscores for wiki file naming convention
+    const wikiFilename = cleanFilename.replace(/ /g, '_')
+    
     // OSRS Wiki icon URLs follow this pattern
-    return `https://oldschool.runescape.wiki/images/${encodeURIComponent(cleanFilename)}.png`
+    return `https://oldschool.runescape.wiki/images/${encodeURIComponent(wikiFilename)}.png`
   }
 
   /**

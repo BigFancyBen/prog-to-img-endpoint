@@ -123,8 +123,8 @@ class SmartWikiItemIDFetcher {
   async fetchMissingItems(missingItems) {
     console.log(`🚀 Starting to fetch ${missingItems.length} missing items...`)
     
-    const batchSize = 5 // Smaller batches for better rate limiting
-    const delayBetweenBatches = 10000 // 10 seconds
+    const batchSize = 25 // Larger batches for faster processing
+    const delayBetweenBatches = 2000 // 2 seconds - more reasonable delay
     const maxRetries = 2
     
     for (let i = 0; i < missingItems.length; i += batchSize) {

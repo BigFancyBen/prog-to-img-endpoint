@@ -295,6 +295,11 @@
                 }, 'progressTests');
 
                 // Collection Log Tests
+                this.createTestCard('🎮 Interactive Collection Log Tester', async () => {
+                    window.open('./collection-log-tester.html', '_blank');
+                    return { message: "Opening interactive collection log tester in new tab...", timestamp: new Date().toISOString() };
+                }, 'collectionTests');
+
                 this.createTestCard('Rare Item Collection', async () => {
                     const response = await axios.post(`${this.serverUrl}/api/collection-log`, {
                         itemName: "Jar of dirt",
