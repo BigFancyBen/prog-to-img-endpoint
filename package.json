@@ -16,7 +16,7 @@
     "fetch-wiki-complete": "node scripts/wikiItemIDFetcher.js",
     "fetch-wiki-smart": "node scripts/smartWikiItemIDFetcher.js",
     "update-data": "node scripts/runIncrementalUpdate.js",
-    "fix-icons": "node fix-missing-icons-enhanced.js",
+    "fix-icons": "node fix-missing-icons-enhanced-clean.js",
     "fix-barrows-icons": "node scripts/fixBarrowsIcons.js",
     "download-barrows-icons": "node scripts/barrowsWikiDownloader.js",
     "test-scraper": "node scripts/testScraper.js",

@@ -26,10 +26,11 @@ async function generateAllItemsPage() {
         try {
           const iconBuffer = databaseService.getIconData(item.id)
           if (iconBuffer && iconBuffer.length > 0) {
-            // Validate that it's actually a valid image file (PNG or WebP)
+            // Validate that it's actually a valid image file (PNG, WebP, or GIF)
             const isPNG = iconBuffer[0] === 0x89 && iconBuffer[1] === 0x50 && iconBuffer[2] === 0x4E && iconBuffer[3] === 0x47
             const isWebP = iconBuffer[0] === 0x52 && iconBuffer[1] === 0x49 && iconBuffer[2] === 0x46 && iconBuffer[3] === 0x46 &&
                           iconBuffer[8] === 0x57 && iconBuffer[9] === 0x45 && iconBuffer[10] === 0x42 && iconBuffer[11] === 0x50
+            const isGIF = iconBuffer[0] === 0x47 && iconBuffer[1] === 0x49 && iconBuffer[2] === 0x46
             
             if (isPNG) {
               processedItem.icon_data = iconBuffer.toString('base64')
@@ -37,9 +38,13 @@ async function generateAllItemsPage() {
               // For WebP, we need to specify the correct MIME type
               processedItem.icon_data = iconBuffer.toString('base64')
               processedItem.icon_format = 'webp'
+            } else if (isGIF) {
+              // For GIF, we need to specify the correct MIME type
+              processedItem.icon_data = iconBuffer.toString('base64')
+              processedItem.icon_format = 'gif'
             } else {
               processedItem.icon_data = null
-              console.warn(`Item ${item.id} (${item.name}) has invalid icon data (not PNG or WebP format)`)
+              console.warn(`Item ${item.id} (${item.name}) has invalid icon data (not PNG, WebP, or GIF format)`)
             }
           } else {
             processedItem.icon_data = null
@@ -405,7 +410,9 @@ function generateHTML(items) {
         
         function generateItemCard(item) {
             const hasIcon = item.icon_data;
-            const mimeType = item.icon_format === 'webp' ? 'image/webp' : 'image/png';
+            let mimeType = 'image/png'
+            if (item.icon_format === 'webp') mimeType = 'image/webp'
+            if (item.icon_format === 'gif') mimeType = 'image/gif'
             const iconSrc = item.icon_data ? \`data:\${mimeType};base64,\${item.icon_data}\` : '';
             
             return \`
@@ -452,7 +459,9 @@ function generateHTML(items) {
 function generateItemCards(items) {
   return items.map(item => {
     const hasIcon = item.icon_data
-    const mimeType = item.icon_format === 'webp' ? 'image/webp' : 'image/png'
+    let mimeType = 'image/png'
+    if (item.icon_format === 'webp') mimeType = 'image/webp'
+    if (item.icon_format === 'gif') mimeType = 'image/gif'
     const iconSrc = item.icon_data ? `data:${mimeType};base64,${item.icon_data}` : ''
     
     return `

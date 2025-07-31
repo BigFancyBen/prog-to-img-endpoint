@@ -6,6 +6,27 @@ import fs from 'fs'
  * Enhanced missing icon fixer that handles both truly missing icons and corrupted icon data
  */
 class EnhancedIconFixer {
+  /**
+   * Hardcoded image URLs for Xeric's talisman and ??? mixture
+   */
+  async getSpecialCaseImages(item) {
+    // Xeric's talisman (ID: 13393)
+    if (item.id === 13393) {
+      // This is the standard icon for Xeric's talisman
+      return ["Xeric's_talisman.png"]
+    }
+    // ??? mixture (hot, warm, horrible)
+    if (item.id === 5589) {
+      return ["%3F%3F%3F_mixture_%28hot%29.png"]
+    }
+    if (item.id === 5590) {
+      return ["%3F%3F%3F_mixture_%28warm%29.png"]
+    }
+    if (item.id === 5591) {
+      return ["%3F%3F%3F_mixture_%28horrible%29.png"]
+    }
+    return []
+  }
   constructor() {
     this.wikiService = new WikiLookupService()
     this.stats = {
@@ -92,12 +113,43 @@ class EnhancedIconFixer {
   /**
    * Get potential image names from wiki page
    */
+
   async getWikiImageNames(item) {
     try {
       // Special handling for Hex edit detected items
       if (item.name === "Hex edit detected") {
         return this.getHexEditDetectedImages(item)
       }
+
+
+      // Special handling for Xeric's talisman and ??? mixture
+      const hardcoded = await this.getSpecialCaseImages(item)
+      if (hardcoded && hardcoded.length > 0) return hardcoded
+
+      // ...existing code...
+  }
+
+  /**
+   * Hardcoded image URLs for Xeric's talisman and ??? mixture
+   */
+  async getSpecialCaseImages(item) {
+    // Xeric's talisman (ID: 13393)
+    if (item.id === 13393) {
+      // This is the standard icon for Xeric's talisman
+      return ["Xeric's_talisman.png"]
+    }
+    // ??? mixture (hot, warm, horrible)
+    if (item.id === 5589) {
+      return ["%3F%3F%3F_mixture_%28hot%29.png"]
+    }
+    if (item.id === 5590) {
+      return ["%3F%3F%3F_mixture_%28warm%29.png"]
+    }
+    if (item.id === 5591) {
+      return ["%3F%3F%3F_mixture_%28horrible%29.png"]
+    }
+    return []
+  }
 
       // Use wiki mapping if available, otherwise guess from item name
       const itemMapping = databaseService.db.prepare(`
@@ -262,71 +314,158 @@ class EnhancedIconFixer {
       console.log(`    🚨 Current data: "${item.dataPreview}"`)
     }
 
-    // Map degraded/broken Barrows items to their undamaged versions
-    // Use exact database names
+    // Map degraded Barrows items to their undamaged versions
     const barrowsMapping = {
-      // Ahrim's hood - corrupted undamaged, need to copy from working item
-      "Ahrim's hood (undamaged)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" }, // Use robetop as fallback
-      "Ahrim's hood (100)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" },
-      "Ahrim's hood (75)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" }, 
-      "Ahrim's hood (50)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" },
-      "Ahrim's hood (25)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" },
-      "Ahrim's hood(broken)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" },
+      // Ahrim's
+      "Ahrim's hood 100": "Ahrim's hood",
+      "Ahrim's hood 75": "Ahrim's hood", 
+      "Ahrim's hood 50": "Ahrim's hood",
+      "Ahrim's hood 25": "Ahrim's hood",
+      "Ahrim's robetop 100": "Ahrim's robetop",
+      "Ahrim's robetop 75": "Ahrim's robetop",
+      "Ahrim's robetop 50": "Ahrim's robetop", 
+      "Ahrim's robetop 25": "Ahrim's robetop",
+      "Ahrim's robeskirt 100": "Ahrim's robeskirt",
+      "Ahrim's robeskirt 75": "Ahrim's robeskirt",
+      "Ahrim's robeskirt 50": "Ahrim's robeskirt",
+      "Ahrim's robeskirt 25": "Ahrim's robeskirt",
+      "Ahrim's staff 100": "Ahrim's staff",
+      "Ahrim's staff 75": "Ahrim's staff",
+      "Ahrim's staff 50": "Ahrim's staff",
+      "Ahrim's staff 25": "Ahrim's staff",
       
-      // Ahrim's staff - corrupted undamaged  
-      "Ahrim's staff (undamaged)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" },
-      "Ahrim's staff (100)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" },
-      "Ahrim's staff (75)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" },
-      "Ahrim's staff (50)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" },
-      "Ahrim's staff (25)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" },
-      "Ahrim's staff(broken)": { sourceId: 4712, sourceName: "Ahrim's robetop (undamaged)" },
+      // Dharok's
+      "Dharok's helm 100": "Dharok's helm",
+      "Dharok's helm 75": "Dharok's helm",
+      "Dharok's helm 50": "Dharok's helm", 
+      "Dharok's helm 25": "Dharok's helm",
+      "Dharok's platebody 100": "Dharok's platebody",
+      "Dharok's platebody 75": "Dharok's platebody",
+      "Dharok's platebody 50": "Dharok's platebody",
+      "Dharok's platebody 25": "Dharok's platebody",
+      "Dharok's platelegs 100": "Dharok's platelegs",
+      "Dharok's platelegs 75": "Dharok's platelegs",
+      "Dharok's platelegs 50": "Dharok's platelegs",
+      "Dharok's platelegs 25": "Dharok's platelegs",
+      "Dharok's greataxe 100": "Dharok's greataxe",
+      "Dharok's greataxe 75": "Dharok's greataxe",
+      "Dharok's greataxe 50": "Dharok's greataxe",
+      "Dharok's greataxe 25": "Dharok's greataxe",
       
-      // Dharok's helm - corrupted undamaged
-      "Dharok's helm (undamaged)": { sourceId: 4718, sourceName: "Dharok's greataxe (undamaged)" },
-      "Dharok's helm (100)": { sourceId: 4718, sourceName: "Dharok's greataxe (undamaged)" },
-      "Dharok's helm (75)": { sourceId: 4718, sourceName: "Dharok's greataxe (undamaged)" },
-      "Dharok's helm (50)": { sourceId: 4718, sourceName: "Dharok's greataxe (undamaged)" },
-      "Dharok's helm (25)": { sourceId: 4718, sourceName: "Dharok's greataxe (undamaged)" },
-      "Dharok's helm(broken)": { sourceId: 4718, sourceName: "Dharok's greataxe (undamaged)" },
+      // Guthan's  
+      "Guthan's helm 100": "Guthan's helm",
+      "Guthan's helm 75": "Guthan's helm",
+      "Guthan's helm 50": "Guthan's helm",
+      "Guthan's helm 25": "Guthan's helm",
+      "Guthan's platebody 100": "Guthan's platebody",
+      "Guthan's platebody 75": "Guthan's platebody",
+      "Guthan's platebody 50": "Guthan's platebody",
+      "Guthan's platebody 25": "Guthan's platebody",
+      "Guthan's chainskirt 100": "Guthan's chainskirt", 
+      "Guthan's chainskirt 75": "Guthan's chainskirt",
+      "Guthan's chainskirt 50": "Guthan's chainskirt",
+      "Guthan's chainskirt 25": "Guthan's chainskirt",
+      "Guthan's warspear 100": "Guthan's warspear",
+      "Guthan's warspear 75": "Guthan's warspear",
+      "Guthan's warspear 50": "Guthan's warspear",
+      "Guthan's warspear 25": "Guthan's warspear",
       
-      // Verac's brassard - corrupted states
-      "Verac's brassard (100)": { sourceId: 4757, sourceName: "Verac's brassard (undamaged)" },
-      "Verac's brassard (75)": { sourceId: 4757, sourceName: "Verac's brassard (undamaged)" },
-      "Verac's brassard (50)": { sourceId: 4757, sourceName: "Verac's brassard (undamaged)" },
-      "Verac's brassard (25)": { sourceId: 4757, sourceName: "Verac's brassard (undamaged)" }
+      // Karil's
+      "Karil's coif 100": "Karil's coif",
+      "Karil's coif 75": "Karil's coif",
+      "Karil's coif 50": "Karil's coif",
+      "Karil's coif 25": "Karil's coif",
+      "Karil's leathertop 100": "Karil's leathertop",
+      "Karil's leathertop 75": "Karil's leathertop",
+      "Karil's leathertop 50": "Karil's leathertop",
+      "Karil's leathertop 25": "Karil's leathertop",
+      "Karil's leatherskirt 100": "Karil's leatherskirt",
+      "Karil's leatherskirt 75": "Karil's leatherskirt",
+      "Karil's leatherskirt 50": "Karil's leatherskirt",
+      "Karil's leatherskirt 25": "Karil's leatherskirt",
+      "Karil's crossbow 100": "Karil's crossbow",
+      "Karil's crossbow 75": "Karil's crossbow",
+      "Karil's crossbow 50": "Karil's crossbow",
+      "Karil's crossbow 25": "Karil's crossbow",
+      
+      // Torag's
+      "Torag's helm 100": "Torag's helm",
+      "Torag's helm 75": "Torag's helm",
+      "Torag's helm 50": "Torag's helm",
+      "Torag's helm 25": "Torag's helm",
+      "Torag's platebody 100": "Torag's platebody",
+      "Torag's platebody 75": "Torag's platebody",
+      "Torag's platebody 50": "Torag's platebody",
+      "Torag's platebody 25": "Torag's platebody",
+      "Torag's platelegs 100": "Torag's platelegs",
+      "Torag's platelegs 75": "Torag's platelegs",
+      "Torag's platelegs 50": "Torag's platelegs",
+      "Torag's platelegs 25": "Torag's platelegs",
+      "Torag's hammers 100": "Torag's hammers",
+      "Torag's hammers 75": "Torag's hammers",
+      "Torag's hammers 50": "Torag's hammers",
+      "Torag's hammers 25": "Torag's hammers",
+      
+      // Verac's
+      "Verac's helm 100": "Verac's helm",
+      "Verac's helm 75": "Verac's helm",
+      "Verac's helm 50": "Verac's helm",
+      "Verac's helm 25": "Verac's helm",
+      "Verac's brassard 100": "Verac's brassard",
+      "Verac's brassard 75": "Verac's brassard",
+      "Verac's brassard 50": "Verac's brassard",
+      "Verac's brassard 25": "Verac's brassard",
+      "Verac's plateskirt 100": "Verac's plateskirt",
+      "Verac's plateskirt 75": "Verac's plateskirt",
+      "Verac's plateskirt 50": "Verac's plateskirt",
+      "Verac's plateskirt 25": "Verac's plateskirt",
+      "Verac's flail 100": "Verac's flail",
+      "Verac's flail 75": "Verac's flail",
+      "Verac's flail 50": "Verac's flail",
+      "Verac's flail 25": "Verac's flail"
     }
 
-    const mapping = barrowsMapping[item.name]
-    if (!mapping) {
+    const undamagedName = barrowsMapping[item.name]
+    if (!undamagedName) {
       console.log(`    ❌ No mapping found for ${item.name}`)
       return false
     }
 
-    console.log(`    🔄 Using source: ${mapping.sourceName} (ID: ${mapping.sourceId})`)
+    console.log(`    🔄 Using undamaged version: ${undamagedName}`)
 
-    // Get the icon data from the source item
-    const sourceIconBuffer = databaseService.getIconData(mapping.sourceId)
-    
-    if (!sourceIconBuffer || sourceIconBuffer.length === 0) {
-      console.log(`    ❌ Source item has no icon data: ${mapping.sourceName}`)
+    // Find the undamaged item in the database
+    const undamagedItem = databaseService.db.prepare(`
+      SELECT * FROM items WHERE name = ?
+    `).get(undamagedName)
+
+    if (!undamagedItem) {
+      console.log(`    ❌ Undamaged item not found: ${undamagedName}`)
       return false
     }
 
-    // Validate the source icon is valid
-    const isPNG = sourceIconBuffer[0] === 0x89 && sourceIconBuffer[1] === 0x50 && sourceIconBuffer[2] === 0x4E && sourceIconBuffer[3] === 0x47
-    const isWebP = sourceIconBuffer[0] === 0x52 && sourceIconBuffer[1] === 0x49 && sourceIconBuffer[2] === 0x46 && sourceIconBuffer[3] === 0x46
+    // Get the icon data from the undamaged item
+    const undamagedIconBuffer = databaseService.getIconData(undamagedItem.id)
+    
+    if (!undamagedIconBuffer || undamagedIconBuffer.length === 0) {
+      console.log(`    ❌ Undamaged item has no icon data: ${undamagedName}`)
+      return false
+    }
+
+    // Validate the undamaged icon is valid
+    const isPNG = undamagedIconBuffer[0] === 0x89 && undamagedIconBuffer[1] === 0x50 && undamagedIconBuffer[2] === 0x4E && undamagedIconBuffer[3] === 0x47
+    const isWebP = undamagedIconBuffer[0] === 0x52 && undamagedIconBuffer[1] === 0x49 && undamagedIconBuffer[2] === 0x46 && undamagedIconBuffer[3] === 0x46
 
     if (!isPNG && !isWebP) {
-      console.log(`    ❌ Source item has corrupted icon data: ${mapping.sourceName}`)
+      console.log(`    ❌ Undamaged item has corrupted icon data: ${undamagedName}`)
       return false
     }
 
-    // Copy the icon data to the target item
+    // Copy the icon data to the degraded item
     databaseService.db.prepare(`
       UPDATE items SET icon_data = ? WHERE id = ?
-    `).run(sourceIconBuffer, item.id)
+    `).run(undamagedIconBuffer, item.id)
 
-    console.log(`    ✅ Successfully copied icon from ${mapping.sourceName} (${sourceIconBuffer.length} bytes)`)
+    console.log(`    ✅ Successfully copied icon from ${undamagedName} (${undamagedIconBuffer.length} bytes)`)
     
     if (isCorrupted) {
       this.stats.corrupted_fixed++
@@ -336,17 +475,19 @@ class EnhancedIconFixer {
   }
 
   /**
-   * Check if an item is a degraded Barrows item that needs fixing
+   * Check if an item is a degraded Barrows item
    */
   isBarrowsItem(itemName) {
-    const barrowsItems = [
-      "Ahrim's hood (undamaged)", "Ahrim's hood (100)", "Ahrim's hood (75)", "Ahrim's hood (50)", "Ahrim's hood (25)", "Ahrim's hood(broken)",
-      "Ahrim's staff (undamaged)", "Ahrim's staff (100)", "Ahrim's staff (75)", "Ahrim's staff (50)", "Ahrim's staff (25)", "Ahrim's staff(broken)",
-      "Dharok's helm (undamaged)", "Dharok's helm (100)", "Dharok's helm (75)", "Dharok's helm (50)", "Dharok's helm (25)", "Dharok's helm(broken)",
-      "Verac's brassard (100)", "Verac's brassard (75)", "Verac's brassard (50)", "Verac's brassard (25)"
+    const barrowsPatterns = [
+      /^Ahrim's .+ (100|75|50|25)$/,
+      /^Dharok's .+ (100|75|50|25)$/,
+      /^Guthan's .+ (100|75|50|25)$/,
+      /^Karil's .+ (100|75|50|25)$/,
+      /^Torag's .+ (100|75|50|25)$/,
+      /^Verac's .+ (100|75|50|25)$/
     ]
     
-    return barrowsItems.includes(itemName)
+    return barrowsPatterns.some(pattern => pattern.test(itemName))
   }
 
   /**

@@ -1,11 +1,19 @@
 {
-  "timestamp": "2025-07-31T05:35:49.010Z",
+  "timestamp": "2025-07-31T05:48:28.156Z",
   "stats": {
-    "total": 26,
-    "success": 22,
-    "failed": 0,
-    "corrupted_fixed": 22,
-    "errors": []
+    "total": 4,
+    "success": 1,
+    "failed": 3,
+    "corrupted_fixed": 0,
+    "errors": [
+      "??? mixture (ID: 5589): No valid images found",
+      "??? mixture (ID: 5590): No valid images found",
+      "??? mixture (ID: 5591): No valid images found"
+    ]
   },
-  "errors": []
+  "errors": [
+    "??? mixture (ID: 5589): No valid images found",
+    "??? mixture (ID: 5590): No valid images found",
+    "??? mixture (ID: 5591): No valid images found"
+  ]
 }
