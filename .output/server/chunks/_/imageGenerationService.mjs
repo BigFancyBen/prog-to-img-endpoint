@@ -259,6 +259,9 @@ const __filename = fileURLToPath(globalThis._importMeta_.url);
 dirname(__filename);
 async function generateProgressSVG(data) {
   var _a, _b, _c, _d;
+  if (!databaseService.db) {
+    await databaseService.init();
+  }
   const titleHeight = CANVAS_CONFIG.TITLE_HEIGHT;
   let lootHeight = 0;
   if (((_a = data == null ? void 0 : data.loot) == null ? void 0 : _a.length) > 0) {
@@ -316,6 +319,10 @@ async function generateProgressSVG(data) {
   return svg;
 }
 async function generateCollectionLogSVG(data) {
+  if (!databaseService.db) {
+    await databaseService.init();
+  }
+  const { itemName, userName } = data;
   const { WIDTH, HEIGHT, ICON_SIZE, ICON_POSITION } = COLLECTION_LOG_CONFIG;
   console.log("\u{1F50D} Initializing database for collection log generation...");
   await databaseService.init();

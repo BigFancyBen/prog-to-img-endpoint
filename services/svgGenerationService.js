@@ -17,6 +17,11 @@ const __dirname = dirname(__filename)
  * @returns {Promise<string>} SVG markup
  */
 export async function generateProgressSVG(data) {
+  // Ensure database is initialized
+  if (!databaseService.db) {
+    await databaseService.init()
+  }
+  
   const titleHeight = CANVAS_CONFIG.TITLE_HEIGHT
   
   // Calculate dimensions
@@ -102,6 +107,13 @@ export async function generateProgressSVG(data) {
  * @returns {Promise<string>} SVG markup
  */
 export async function generateCollectionLogSVG(data) {
+  // Ensure database is initialized
+  if (!databaseService.db) {
+    await databaseService.init()
+  }
+  
+  const { itemName, userName } = data
+  
   const { WIDTH, HEIGHT, ICON_SIZE, ICON_POSITION } = COLLECTION_LOG_CONFIG
   
   // Initialize database

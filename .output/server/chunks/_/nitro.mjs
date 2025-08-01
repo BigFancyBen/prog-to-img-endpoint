@@ -4201,7 +4201,7 @@ const assets = {
   "/index.html": {
     "type": "text/html; charset=utf-8",
     "etag": "\"2d6b-sIT5jhB9MY+h8svB8PH96eFxgnk\"",
-    "mtime": "2025-08-01T00:15:44.970Z",
+    "mtime": "2025-08-01T00:36:51.207Z",
     "size": 11627,
     "path": "../public/index.html"
   },
@@ -4222,14 +4222,14 @@ const assets = {
   "/data/osrs.db-shm": {
     "type": "text/plain; charset=utf-8",
     "etag": "\"8000-YI7rdIgEJFPJykD34TmPwaJw8/Q\"",
-    "mtime": "2025-08-01T00:34:54.708Z",
+    "mtime": "2025-08-01T01:05:39.410Z",
     "size": 32768,
     "path": "../public/data/osrs.db-shm"
   },
   "/data/osrs.db-wal": {
     "type": "text/plain; charset=utf-8",
     "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
-    "mtime": "2025-08-01T00:34:54.707Z",
+    "mtime": "2025-08-01T00:59:59.182Z",
     "size": 0,
     "path": "../public/data/osrs.db-wal"
   },
@@ -4246,48 +4246,6 @@ const assets = {
     "mtime": "2025-07-23T05:14:17.710Z",
     "size": 1235,
     "path": "../public/data/wiki-icons-checkpoint.json"
-  },
-  "/docs/collection-log.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"4aa1-G7FZK7cnU/ol/RnHeY8t/GRiMC8\"",
-    "mtime": "2025-08-01T00:12:55.672Z",
-    "size": 19105,
-    "path": "../public/docs/collection-log.html"
-  },
-  "/docs/items.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"708a-+4KWPwD7rXp8E43bvUPvFlGxCF0\"",
-    "mtime": "2025-08-01T00:35:28.615Z",
-    "size": 28810,
-    "path": "../public/docs/items.html"
-  },
-  "/docs/monsters.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"3015-LUt1Bt7pCmsON/WB5i+oWHBGuGU\"",
-    "mtime": "2025-07-26T04:26:26.756Z",
-    "size": 12309,
-    "path": "../public/docs/monsters.html"
-  },
-  "/docs/prayers.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"1b29-myWDzwlplqXzA9SIlyc9FYT5WBQ\"",
-    "mtime": "2025-07-26T04:26:26.756Z",
-    "size": 6953,
-    "path": "../public/docs/prayers.html"
-  },
-  "/docs/progress-image.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"6b9f-SiuTQYNd84+UljxWtedQ2u/QXVI\"",
-    "mtime": "2025-08-01T00:12:55.672Z",
-    "size": 27551,
-    "path": "../public/docs/progress-image.html"
-  },
-  "/docs/search.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"2958-1FuLBOAZvXoTfTkHV1Rum2ClIWY\"",
-    "mtime": "2025-07-31T23:50:06.873Z",
-    "size": 10584,
-    "path": "../public/docs/search.html"
   },
   "/icons/agility.png": {
     "type": "image/png",
@@ -4457,6 +4415,62 @@ const assets = {
     "size": 233,
     "path": "../public/icons/woodcutting.png"
   },
+  "/docs/collection-log.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"4f4b-9jpb5IT3skbW17icZJX7uwsQLbk\"",
+    "mtime": "2025-08-01T01:04:13.832Z",
+    "size": 20299,
+    "path": "../public/docs/collection-log.html"
+  },
+  "/docs/items.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"708a-+4KWPwD7rXp8E43bvUPvFlGxCF0\"",
+    "mtime": "2025-08-01T00:36:51.207Z",
+    "size": 28810,
+    "path": "../public/docs/items.html"
+  },
+  "/docs/monsters.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"3015-LUt1Bt7pCmsON/WB5i+oWHBGuGU\"",
+    "mtime": "2025-07-26T04:26:26.756Z",
+    "size": 12309,
+    "path": "../public/docs/monsters.html"
+  },
+  "/docs/prayers.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"1b29-myWDzwlplqXzA9SIlyc9FYT5WBQ\"",
+    "mtime": "2025-07-26T04:26:26.756Z",
+    "size": 6953,
+    "path": "../public/docs/prayers.html"
+  },
+  "/docs/progress-image.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"6e33-XXUGZUpN9pWIHkQ3LF8WP3Cti+E\"",
+    "mtime": "2025-08-01T01:04:13.825Z",
+    "size": 28211,
+    "path": "../public/docs/progress-image.html"
+  },
+  "/docs/search.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"2958-1FuLBOAZvXoTfTkHV1Rum2ClIWY\"",
+    "mtime": "2025-07-31T23:50:06.873Z",
+    "size": 10584,
+    "path": "../public/docs/search.html"
+  },
+  "/font/runescape.ttf": {
+    "type": "font/ttf",
+    "etag": "\"37a8-H+uLKLjAWQS8z/4bBxweWv6wUkI\"",
+    "mtime": "2025-06-30T00:45:10.329Z",
+    "size": 14248,
+    "path": "../public/font/runescape.ttf"
+  },
+  "/font/runescape_chat.ttf": {
+    "type": "font/ttf",
+    "etag": "\"8e30-HjlH00zcqcuPSYDr/Pnaf7qRh7s\"",
+    "mtime": "2025-07-31T18:09:09.000Z",
+    "size": 36400,
+    "path": "../public/font/runescape_chat.ttf"
+  },
   "/test/all-items-display-dynamic.html": {
     "type": "text/html; charset=utf-8",
     "etag": "\"425b-2RYGjnrSrdVWPGoj2b7JgiKWbhQ\"",
@@ -4499,20 +4513,6 @@ const assets = {
     "size": 21015,
     "path": "../public/test/test.html"
   },
-  "/font/runescape.ttf": {
-    "type": "font/ttf",
-    "etag": "\"37a8-H+uLKLjAWQS8z/4bBxweWv6wUkI\"",
-    "mtime": "2025-06-30T00:45:10.329Z",
-    "size": 14248,
-    "path": "../public/font/runescape.ttf"
-  },
-  "/font/runescape_chat.ttf": {
-    "type": "font/ttf",
-    "etag": "\"8e30-HjlH00zcqcuPSYDr/Pnaf7qRh7s\"",
-    "mtime": "2025-07-31T18:09:09.000Z",
-    "size": 36400,
-    "path": "../public/font/runescape_chat.ttf"
-  },
   "/data/cache/items-complete.json": {
     "type": "application/json",
     "etag": "\"2917b24-WuiaxX5zQb6tP+GQQn7ABJ0F8UM\"",
@@ -4548,6 +4548,13 @@ const assets = {
     "size": 2,
     "path": "../public/data/cache/wiki-items.json"
   },
+  "/data/processed/summary.json": {
+    "type": "application/json",
+    "etag": "\"14a-eZ+woDImQ0i2EpxXlDgsd0fIzeo\"",
+    "mtime": "2025-07-26T00:51:11.277Z",
+    "size": 330,
+    "path": "../public/data/processed/summary.json"
+  },
   "/data/streaming/items-stream.jsonl": {
     "type": "text/plain; charset=utf-8",
     "etag": "\"32f95-bc1vzAGCNJGpgbH+QN2HI9VN8oI\"",
@@ -4555,12 +4562,89 @@ const assets = {
     "size": 208789,
     "path": "../public/data/streaming/items-stream.jsonl"
   },
-  "/data/processed/summary.json": {
-    "type": "application/json",
-    "etag": "\"14a-eZ+woDImQ0i2EpxXlDgsd0fIzeo\"",
-    "mtime": "2025-07-26T00:51:11.277Z",
-    "size": 330,
-    "path": "../public/data/processed/summary.json"
+  "/docs/images/agility-example.png": {
+    "type": "image/png",
+    "etag": "\"dff7-Armjtby9R3A8uIEfAAbZZLFgeVU\"",
+    "mtime": "2025-08-01T01:09:44.517Z",
+    "size": 57335,
+    "path": "../public/docs/images/agility-example.png"
+  },
+  "/docs/images/collection-abyssal-example.png": {
+    "type": "image/png",
+    "etag": "\"15aa0-kb6XF5r6xrPvNQJwkEsVQR0/KDA\"",
+    "mtime": "2025-08-01T01:09:44.889Z",
+    "size": 88736,
+    "path": "../public/docs/images/collection-abyssal-example.png"
+  },
+  "/docs/images/collection-boss-example.png": {
+    "type": "image/png",
+    "etag": "\"15aa0-OLSvS6lwBB++xvrn4U2OPfmY2CE\"",
+    "mtime": "2025-08-01T01:09:45.119Z",
+    "size": 88736,
+    "path": "../public/docs/images/collection-boss-example.png"
+  },
+  "/docs/images/collection-dragon-example.png": {
+    "type": "image/png",
+    "etag": "\"15aa0-7QZA462i7+hPGhtAhzw3eABjRTs\"",
+    "mtime": "2025-08-01T01:09:44.821Z",
+    "size": 88736,
+    "path": "../public/docs/images/collection-dragon-example.png"
+  },
+  "/docs/images/collection-jar-example.png": {
+    "type": "image/png",
+    "etag": "\"15aa0-2twpMXGUhs7PqJbzx9n/NzKiR3g\"",
+    "mtime": "2025-08-01T01:09:44.745Z",
+    "size": 88736,
+    "path": "../public/docs/images/collection-jar-example.png"
+  },
+  "/docs/images/collection-pet-example.png": {
+    "type": "image/png",
+    "etag": "\"15aa0-hWC3kRTlvzw8pVoCawzw4ed/xr8\"",
+    "mtime": "2025-08-01T01:09:45.038Z",
+    "size": 88736,
+    "path": "../public/docs/images/collection-pet-example.png"
+  },
+  "/docs/images/collection-quest-example.png": {
+    "type": "image/png",
+    "etag": "\"15aa0-tMWAFDpsi+/ENDYqao9AnqPXZGg\"",
+    "mtime": "2025-08-01T01:09:44.964Z",
+    "size": 88736,
+    "path": "../public/docs/images/collection-quest-example.png"
+  },
+  "/docs/images/combat-example.png": {
+    "type": "image/png",
+    "etag": "\"147cf-krhKP89yMDHQCEv2f2MmXbV0hfg\"",
+    "mtime": "2025-08-01T01:09:44.579Z",
+    "size": 83919,
+    "path": "../public/docs/images/combat-example.png"
+  },
+  "/docs/images/fishing-example.png": {
+    "type": "image/png",
+    "etag": "\"147d4-WNAtI5dccJiBN/qmjmsbNFZP1EA\"",
+    "mtime": "2025-08-01T01:09:44.642Z",
+    "size": 83924,
+    "path": "../public/docs/images/fishing-example.png"
+  },
+  "/docs/images/herblore-example.png": {
+    "type": "image/png",
+    "etag": "\"147ba-dcjU/YxRVyrwOjFadhPJzR3kmDE\"",
+    "mtime": "2025-08-01T01:09:44.674Z",
+    "size": 83898,
+    "path": "../public/docs/images/herblore-example.png"
+  },
+  "/docs/images/mining-example.png": {
+    "type": "image/png",
+    "etag": "\"147bd-b3ijOVPT6+yMHUK9hsIXSVCkgtk\"",
+    "mtime": "2025-08-01T01:09:44.609Z",
+    "size": 83901,
+    "path": "../public/docs/images/mining-example.png"
+  },
+  "/docs/images/multi-skill-example.png": {
+    "type": "image/png",
+    "etag": "\"147df-UK8U2ndAKZIjnIcLADqOj9e2wDw\"",
+    "mtime": "2025-08-01T01:09:44.548Z",
+    "size": 83935,
+    "path": "../public/docs/images/multi-skill-example.png"
   }
 };
 
