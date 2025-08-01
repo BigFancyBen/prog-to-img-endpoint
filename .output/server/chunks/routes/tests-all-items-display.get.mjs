@@ -1,4 +1,4 @@
-import { c as defineEventHandler, g as getQuery } from '../_/nitro.mjs';
+import { c as defineEventHandler, h as getQuery } from '../_/nitro.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -6,6 +6,8 @@ import 'node:buffer';
 import 'node:fs';
 import 'node:url';
 import 'node:path';
+import 'chokidar';
+import 'anymatch';
 import 'node:crypto';
 
 const testsAllItemsDisplay_get = defineEventHandler(async (event) => {

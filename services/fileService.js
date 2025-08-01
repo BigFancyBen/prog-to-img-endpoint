@@ -7,9 +7,10 @@ import IconService from './iconService.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Cache for data to improve performance
+// Enhanced cache for data to improve performance
 const cache = new Map()
-const CACHE_TTL = 60 * 60 * 1000 // 1 hour
+const CACHE_TTL = 30 * 60 * 1000 // 30 minutes (reduced for better performance)
+const MAX_CACHE_SIZE = 500 // Limit cache size
 
 class FileService {
   /**
@@ -28,6 +29,13 @@ class FileService {
         return cached.data
       }
       cache.delete(cacheKey)
+    }
+    
+    // Cleanup cache if it gets too large
+    if (cache.size > MAX_CACHE_SIZE) {
+      const entries = Array.from(cache.entries())
+      entries.sort((a, b) => a[1].timestamp - b[1].timestamp)
+      entries.slice(0, 100).forEach(([key]) => cache.delete(key))
     }
 
     try {

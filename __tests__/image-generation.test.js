@@ -146,7 +146,7 @@ describe('Progress Image Generation', () => {
       } else {
         // If no reference image exists, save the generated one as reference
         TEST_UTILS.saveImage(imageBuffer, referencePath);
-        console.log(`Created reference image for ${testCase.name}`);
+        
       }
     });
   });
@@ -202,7 +202,7 @@ describe('Collection Log Image Generation', () => {
       } else {
         // If no reference image exists, save the generated one as reference
         TEST_UTILS.saveImage(imageBuffer, referencePath);
-        console.log(`Created reference image for collection-${testCase.name}`);
+        
       }
     });
   });

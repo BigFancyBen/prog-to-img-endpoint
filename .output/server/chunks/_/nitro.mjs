@@ -4,7 +4,9 @@ import { EventEmitter } from 'node:events';
 import { Buffer as Buffer$1 } from 'node:buffer';
 import { promises, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { resolve as resolve$1, dirname as dirname$1, join } from 'node:path';
+import { resolve as resolve$1, dirname as dirname$1, relative, join } from 'node:path';
+import { watch as watch$1 } from 'chokidar';
+import anymatch from 'anymatch';
 import { createHash } from 'node:crypto';
 
 const suspectProtoRx = /"(?:_|\\u0{2}5[Ff]){2}(?:p|\\u0{2}70)(?:r|\\u0{2}72)(?:o|\\u0{2}6[Ff])(?:t|\\u0{2}74)(?:o|\\u0{2}6[Ff])(?:_|\\u0{2}5[Ff]){2}"\s*:/;
@@ -717,6 +719,9 @@ function getRouterParam(event, name, opts = {}) {
   const params = getRouterParams(event, opts);
   return params[name];
 }
+function getMethod(event, defaultMethod = "GET") {
+  return (event.node.req.method || defaultMethod).toUpperCase();
+}
 function isMethod(event, expected, allowHead) {
   if (typeof expected === "string") {
     if (event.method === expected) {
@@ -748,6 +753,7 @@ function getRequestHeader(event, name) {
   const value = headers[name.toLowerCase()];
   return value;
 }
+const getHeader = getRequestHeader;
 function getRequestHost(event, opts = {}) {
   if (opts.xForwardedHost) {
     const xForwardedHost = event.node.req.headers["x-forwarded-host"];
@@ -2634,11 +2640,11 @@ function defineDriver$1(factory) {
   return factory;
 }
 
-const DRIVER_NAME$1 = "memory";
+const DRIVER_NAME$2 = "memory";
 const memory = defineDriver$1(() => {
   const data = /* @__PURE__ */ new Map();
   return {
-    name: DRIVER_NAME$1,
+    name: DRIVER_NAME$2,
     getInstance: () => data,
     hasItem(key) {
       return data.has(key);
@@ -3187,6 +3193,117 @@ async function rmRecursive(dir) {
   );
 }
 
+const PATH_TRAVERSE_RE$1 = /\.\.:|\.\.$/;
+const DRIVER_NAME$1 = "fs";
+const unstorage_47drivers_47fs = defineDriver((userOptions = {}) => {
+  if (!userOptions.base) {
+    throw createRequiredError(DRIVER_NAME$1, "base");
+  }
+  const base = resolve$1(userOptions.base);
+  const ignore = anymatch(
+    userOptions.ignore || ["**/node_modules/**", "**/.git/**"]
+  );
+  const r = (key) => {
+    if (PATH_TRAVERSE_RE$1.test(key)) {
+      throw createError(
+        DRIVER_NAME$1,
+        `Invalid key: ${JSON.stringify(key)}. It should not contain .. segments`
+      );
+    }
+    const resolved = join(base, key.replace(/:/g, "/"));
+    return resolved;
+  };
+  let _watcher;
+  const _unwatch = async () => {
+    if (_watcher) {
+      await _watcher.close();
+      _watcher = void 0;
+    }
+  };
+  return {
+    name: DRIVER_NAME$1,
+    options: userOptions,
+    flags: {
+      maxDepth: true
+    },
+    hasItem(key) {
+      return existsSync(r(key));
+    },
+    getItem(key) {
+      return readFile(r(key), "utf8");
+    },
+    getItemRaw(key) {
+      return readFile(r(key));
+    },
+    async getMeta(key) {
+      const { atime, mtime, size, birthtime, ctime } = await promises.stat(r(key)).catch(() => ({}));
+      return { atime, mtime, size, birthtime, ctime };
+    },
+    setItem(key, value) {
+      if (userOptions.readOnly) {
+        return;
+      }
+      return writeFile(r(key), value, "utf8");
+    },
+    setItemRaw(key, value) {
+      if (userOptions.readOnly) {
+        return;
+      }
+      return writeFile(r(key), value);
+    },
+    removeItem(key) {
+      if (userOptions.readOnly) {
+        return;
+      }
+      return unlink(r(key));
+    },
+    getKeys(_base, topts) {
+      return readdirRecursive(r("."), ignore, topts?.maxDepth);
+    },
+    async clear() {
+      if (userOptions.readOnly || userOptions.noClear) {
+        return;
+      }
+      await rmRecursive(r("."));
+    },
+    async dispose() {
+      if (_watcher) {
+        await _watcher.close();
+      }
+    },
+    async watch(callback) {
+      if (_watcher) {
+        return _unwatch;
+      }
+      await new Promise((resolve2, reject) => {
+        const watchOptions = {
+          ignoreInitial: true,
+          ...userOptions.watchOptions
+        };
+        if (!watchOptions.ignored) {
+          watchOptions.ignored = [];
+        } else if (Array.isArray(watchOptions.ignored)) {
+          watchOptions.ignored = [...watchOptions.ignored];
+        } else {
+          watchOptions.ignored = [watchOptions.ignored];
+        }
+        watchOptions.ignored.push(ignore);
+        _watcher = watch$1(base, watchOptions).on("ready", () => {
+          resolve2();
+        }).on("error", reject).on("all", (eventName, path) => {
+          path = relative(base, path);
+          if (eventName === "change" || eventName === "add") {
+            callback("update", path);
+          } else if (eventName === "unlink") {
+            callback("remove", path);
+          }
+        });
+      });
+      return _unwatch;
+    }
+  };
+});
+
 const PATH_TRAVERSE_RE = /\.\.:|\.\.$/;
 const DRIVER_NAME = "fs-lite";
 const unstorage_47drivers_47fs_45lite = defineDriver((opts = {}) => {
@@ -3257,6 +3374,7 @@ const storage = createStorage({});
 
 storage.mount('/assets', assets$1);
 
+storage.mount('fs', unstorage_47drivers_47fs({"driver":"fs","base":"./data"}));
 storage.mount('data', unstorage_47drivers_47fs_45lite({"driver":"fsLite","base":"./.data/kv"}));
 
 function useStorage(base = "") {
@@ -3969,8 +4087,37 @@ const _inlineRuntimeConfig = {
     "baseURL": "/"
   },
   "nitro": {
-    "routeRules": {}
-  }
+    "preset": "node-server",
+    "routeRules": {
+      "/api/**": {
+        "cors": true,
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-allow-methods": "*",
+          "access-control-allow-headers": "*",
+          "access-control-max-age": "0",
+          "Cache-Control": "public, max-age=300"
+        }
+      },
+      "/icons/**": {
+        "headers": {
+          "Cache-Control": "public, max-age=86400"
+        }
+      },
+      "/font/**": {
+        "headers": {
+          "Cache-Control": "public, max-age=31536000"
+        }
+      },
+      "/data/**": {
+        "headers": {
+          "Cache-Control": "public, max-age=3600"
+        }
+      }
+    }
+  },
+  "port": 3000,
+  "nodeEnv": "development"
 };
 const envOptions = {
   prefix: "NITRO_",
@@ -4009,9 +4156,9 @@ new Proxy(/* @__PURE__ */ Object.create(null), {
   }
 });
 
-const config = useRuntimeConfig();
+const config$1 = useRuntimeConfig();
 const _routeRulesMatcher = toRouteMatcher(
-  createRouter$1({ routes: config.nitro.routeRules })
+  createRouter$1({ routes: config$1.nitro.routeRules })
 );
 function createRouteRulesHandler(ctx) {
   return eventHandler((event) => {
@@ -4205,47 +4352,21 @@ const assets = {
     "size": 11627,
     "path": "../public/index.html"
   },
-  "/data/fetch-checkpoint.json": {
-    "type": "application/json",
-    "etag": "\"148-IoQ4G1dQCWlMnh7E1SZ4HmL54bM\"",
-    "mtime": "2025-07-22T21:32:15.441Z",
-    "size": 328,
-    "path": "../public/data/fetch-checkpoint.json"
+  "/index.html.br": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"7aa-sxL6Bq+UCfsxsDu1SfREmyoWeCY\"",
+    "mtime": "2025-08-01T04:34:15.114Z",
+    "size": 1962,
+    "path": "../public/index.html.br"
   },
-  "/data/osrs.db": {
-    "type": "text/plain; charset=utf-8",
-    "etag": "\"21ec000-LjzWLAI6ofkJe50trSzVY4DHc88\"",
-    "mtime": "2025-07-31T17:53:16.646Z",
-    "size": 35569664,
-    "path": "../public/data/osrs.db"
-  },
-  "/data/osrs.db-shm": {
-    "type": "text/plain; charset=utf-8",
-    "etag": "\"8000-YI7rdIgEJFPJykD34TmPwaJw8/Q\"",
-    "mtime": "2025-08-01T01:05:39.410Z",
-    "size": 32768,
-    "path": "../public/data/osrs.db-shm"
-  },
-  "/data/osrs.db-wal": {
-    "type": "text/plain; charset=utf-8",
-    "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
-    "mtime": "2025-08-01T00:59:59.182Z",
-    "size": 0,
-    "path": "../public/data/osrs.db-wal"
-  },
-  "/data/wiki-checkpoint.json": {
-    "type": "application/json",
-    "etag": "\"bc812-HCFKAceC9npMRdL08ddDgcp9qG4\"",
-    "mtime": "2025-07-26T00:08:52.336Z",
-    "size": 772114,
-    "path": "../public/data/wiki-checkpoint.json"
-  },
-  "/data/wiki-icons-checkpoint.json": {
-    "type": "application/json",
-    "etag": "\"4d3-8QzAP8Sa3SdQbZoZahwRUIRFJB4\"",
-    "mtime": "2025-07-23T05:14:17.710Z",
-    "size": 1235,
-    "path": "../public/data/wiki-icons-checkpoint.json"
+  "/index.html.gz": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"9c5-HbFORkjA5425yrzu+Szt7Fhq4xs\"",
+    "mtime": "2025-08-01T04:34:15.114Z",
+    "size": 2501,
+    "path": "../public/index.html.gz"
   },
   "/icons/agility.png": {
     "type": "image/png",
@@ -4415,54 +4536,28 @@ const assets = {
     "size": 233,
     "path": "../public/icons/woodcutting.png"
   },
-  "/docs/collection-log.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"4f4b-9jpb5IT3skbW17icZJX7uwsQLbk\"",
-    "mtime": "2025-08-01T01:04:13.832Z",
-    "size": 20299,
-    "path": "../public/docs/collection-log.html"
-  },
-  "/docs/items.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"708a-+4KWPwD7rXp8E43bvUPvFlGxCF0\"",
-    "mtime": "2025-08-01T00:36:51.207Z",
-    "size": 28810,
-    "path": "../public/docs/items.html"
-  },
-  "/docs/monsters.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"3015-LUt1Bt7pCmsON/WB5i+oWHBGuGU\"",
-    "mtime": "2025-07-26T04:26:26.756Z",
-    "size": 12309,
-    "path": "../public/docs/monsters.html"
-  },
-  "/docs/prayers.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"1b29-myWDzwlplqXzA9SIlyc9FYT5WBQ\"",
-    "mtime": "2025-07-26T04:26:26.756Z",
-    "size": 6953,
-    "path": "../public/docs/prayers.html"
-  },
-  "/docs/progress-image.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"6e33-XXUGZUpN9pWIHkQ3LF8WP3Cti+E\"",
-    "mtime": "2025-08-01T01:04:13.825Z",
-    "size": 28211,
-    "path": "../public/docs/progress-image.html"
-  },
-  "/docs/search.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"2958-1FuLBOAZvXoTfTkHV1Rum2ClIWY\"",
-    "mtime": "2025-07-31T23:50:06.873Z",
-    "size": 10584,
-    "path": "../public/docs/search.html"
-  },
   "/font/runescape.ttf": {
     "type": "font/ttf",
     "etag": "\"37a8-H+uLKLjAWQS8z/4bBxweWv6wUkI\"",
     "mtime": "2025-06-30T00:45:10.329Z",
     "size": 14248,
     "path": "../public/font/runescape.ttf"
+  },
+  "/font/runescape.ttf.br": {
+    "type": "font/ttf",
+    "encoding": "br",
+    "etag": "\"b43-2i/xLTQV6m8J3RqZ26ZuwTCMDdg\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 2883,
+    "path": "../public/font/runescape.ttf.br"
+  },
+  "/font/runescape.ttf.gz": {
+    "type": "font/ttf",
+    "encoding": "gzip",
+    "etag": "\"d45-rbVK/x9G+WW/xQy1/VuW3V0J6UY\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 3397,
+    "path": "../public/font/runescape.ttf.gz"
   },
   "/font/runescape_chat.ttf": {
     "type": "font/ttf",
@@ -4471,12 +4566,288 @@ const assets = {
     "size": 36400,
     "path": "../public/font/runescape_chat.ttf"
   },
+  "/font/runescape_chat.ttf.br": {
+    "type": "font/ttf",
+    "encoding": "br",
+    "etag": "\"156d-Wnd852nVJqjXmnTsF90PxMzlLBU\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 5485,
+    "path": "../public/font/runescape_chat.ttf.br"
+  },
+  "/font/runescape_chat.ttf.gz": {
+    "type": "font/ttf",
+    "encoding": "gzip",
+    "etag": "\"196a-/6VsWmSBjyKXjlXLKGvRIHZmn+8\"",
+    "mtime": "2025-08-01T04:34:15.117Z",
+    "size": 6506,
+    "path": "../public/font/runescape_chat.ttf.gz"
+  },
+  "/docs/collection-log.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"4f4b-9jpb5IT3skbW17icZJX7uwsQLbk\"",
+    "mtime": "2025-08-01T01:16:36.386Z",
+    "size": 20299,
+    "path": "../public/docs/collection-log.html"
+  },
+  "/docs/collection-log.html.br": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"d29-/nLYD6nUyZ4CntWbLUFrjgHHnTw\"",
+    "mtime": "2025-08-01T04:34:15.115Z",
+    "size": 3369,
+    "path": "../public/docs/collection-log.html.br"
+  },
+  "/docs/collection-log.html.gz": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"1046-LU0wt2o1MR1ujtSKWvtBtNRaWjg\"",
+    "mtime": "2025-08-01T04:34:15.114Z",
+    "size": 4166,
+    "path": "../public/docs/collection-log.html.gz"
+  },
+  "/docs/items.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"708a-+4KWPwD7rXp8E43bvUPvFlGxCF0\"",
+    "mtime": "2025-08-01T00:36:51.207Z",
+    "size": 28810,
+    "path": "../public/docs/items.html"
+  },
+  "/docs/items.html.br": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"12c4-ag0sdEEZXe1zJ9/8rKsGAefZUbw\"",
+    "mtime": "2025-08-01T04:34:15.115Z",
+    "size": 4804,
+    "path": "../public/docs/items.html.br"
+  },
+  "/docs/items.html.gz": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"1681-/e5mBVGReEI7Z4Ljck/jEPx+M2A\"",
+    "mtime": "2025-08-01T04:34:15.115Z",
+    "size": 5761,
+    "path": "../public/docs/items.html.gz"
+  },
+  "/docs/monsters.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"3015-LUt1Bt7pCmsON/WB5i+oWHBGuGU\"",
+    "mtime": "2025-07-26T04:26:26.756Z",
+    "size": 12309,
+    "path": "../public/docs/monsters.html"
+  },
+  "/docs/monsters.html.br": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"997-CQZj6ypXsKirkBvMIxFIfqrQXqE\"",
+    "mtime": "2025-08-01T04:34:15.115Z",
+    "size": 2455,
+    "path": "../public/docs/monsters.html.br"
+  },
+  "/docs/monsters.html.gz": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"bbc-DnwmJqDEgOAln0YzkVO2IGr7wng\"",
+    "mtime": "2025-08-01T04:34:15.115Z",
+    "size": 3004,
+    "path": "../public/docs/monsters.html.gz"
+  },
+  "/docs/prayers.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"1b29-myWDzwlplqXzA9SIlyc9FYT5WBQ\"",
+    "mtime": "2025-07-26T04:26:26.756Z",
+    "size": 6953,
+    "path": "../public/docs/prayers.html"
+  },
+  "/docs/prayers.html.br": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"629-UVi2BmnoOHVW5CWicg3YgdXGrL0\"",
+    "mtime": "2025-08-01T04:34:15.115Z",
+    "size": 1577,
+    "path": "../public/docs/prayers.html.br"
+  },
+  "/docs/prayers.html.gz": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"7e9-JPlPQR2gtkk01G7+TpxqFKkUO4Y\"",
+    "mtime": "2025-08-01T04:34:15.115Z",
+    "size": 2025,
+    "path": "../public/docs/prayers.html.gz"
+  },
+  "/docs/progress-image.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"6e33-XXUGZUpN9pWIHkQ3LF8WP3Cti+E\"",
+    "mtime": "2025-08-01T01:16:36.386Z",
+    "size": 28211,
+    "path": "../public/docs/progress-image.html"
+  },
+  "/docs/progress-image.html.br": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"10fa-4OEtVY3bp88YmHocWlgD83Sj5bM\"",
+    "mtime": "2025-08-01T04:34:15.115Z",
+    "size": 4346,
+    "path": "../public/docs/progress-image.html.br"
+  },
+  "/docs/progress-image.html.gz": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"14c4-PTQ+7KDGpvmtbk5LupfZ38ZktjA\"",
+    "mtime": "2025-08-01T04:34:15.115Z",
+    "size": 5316,
+    "path": "../public/docs/progress-image.html.gz"
+  },
+  "/docs/search.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"2958-1FuLBOAZvXoTfTkHV1Rum2ClIWY\"",
+    "mtime": "2025-07-31T23:50:06.873Z",
+    "size": 10584,
+    "path": "../public/docs/search.html"
+  },
+  "/docs/search.html.br": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"7de-KEnWbDqYOlLRQ+ArVd5QCppisws\"",
+    "mtime": "2025-08-01T04:34:15.115Z",
+    "size": 2014,
+    "path": "../public/docs/search.html.br"
+  },
+  "/docs/search.html.gz": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"a04-qhtxRpf+YILyxi/6pRjZZLf6v8A\"",
+    "mtime": "2025-08-01T04:34:15.114Z",
+    "size": 2564,
+    "path": "../public/docs/search.html.gz"
+  },
+  "/data/fetch-checkpoint.json": {
+    "type": "application/json",
+    "etag": "\"148-IoQ4G1dQCWlMnh7E1SZ4HmL54bM\"",
+    "mtime": "2025-07-22T21:32:15.441Z",
+    "size": 328,
+    "path": "../public/data/fetch-checkpoint.json"
+  },
+  "/data/osrs.db": {
+    "type": "text/plain; charset=utf-8",
+    "etag": "\"21ec000-LjzWLAI6ofkJe50trSzVY4DHc88\"",
+    "mtime": "2025-07-31T17:53:16.646Z",
+    "size": 35569664,
+    "path": "../public/data/osrs.db"
+  },
+  "/data/osrs.db-shm": {
+    "type": "text/plain; charset=utf-8",
+    "etag": "\"8000-YI7rdIgEJFPJykD34TmPwaJw8/Q\"",
+    "mtime": "2025-08-01T04:32:55.596Z",
+    "size": 32768,
+    "path": "../public/data/osrs.db-shm"
+  },
+  "/data/osrs.db-shm.br": {
+    "type": "text/plain; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"36-H8hYkdVYELYu77LG8XeAlx+Gu6M\"",
+    "mtime": "2025-08-01T04:34:15.114Z",
+    "size": 54,
+    "path": "../public/data/osrs.db-shm.br"
+  },
+  "/data/osrs.db-shm.gz": {
+    "type": "text/plain; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"65-93NW8lZPOYzxic9j+3r54YQGVio\"",
+    "mtime": "2025-08-01T04:34:15.114Z",
+    "size": 101,
+    "path": "../public/data/osrs.db-shm.gz"
+  },
+  "/data/osrs.db-wal": {
+    "type": "text/plain; charset=utf-8",
+    "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
+    "mtime": "2025-08-01T00:59:59.182Z",
+    "size": 0,
+    "path": "../public/data/osrs.db-wal"
+  },
+  "/data/osrs.db.br": {
+    "type": "text/plain; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"146059c-mq2sYKvW9t4jDcXkufN/Xp24UQk\"",
+    "mtime": "2025-08-01T04:35:46.511Z",
+    "size": 21366172,
+    "path": "../public/data/osrs.db.br"
+  },
+  "/data/osrs.db.gz": {
+    "type": "text/plain; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"16f54a5-Vs112xAkq/XCvQCC10VjCRL+sKE\"",
+    "mtime": "2025-08-01T04:34:17.765Z",
+    "size": 24073381,
+    "path": "../public/data/osrs.db.gz"
+  },
+  "/data/wiki-checkpoint.json": {
+    "type": "application/json",
+    "etag": "\"bc812-HCFKAceC9npMRdL08ddDgcp9qG4\"",
+    "mtime": "2025-07-26T00:08:52.336Z",
+    "size": 772114,
+    "path": "../public/data/wiki-checkpoint.json"
+  },
+  "/data/wiki-checkpoint.json.br": {
+    "type": "application/json",
+    "encoding": "br",
+    "etag": "\"19182-2eKo4Wcxz1k4PNy2VPaToa5wJBw\"",
+    "mtime": "2025-08-01T04:34:16.164Z",
+    "size": 102786,
+    "path": "../public/data/wiki-checkpoint.json.br"
+  },
+  "/data/wiki-checkpoint.json.gz": {
+    "type": "application/json",
+    "encoding": "gzip",
+    "etag": "\"249c1-pgVIVCWptwX6ymles3kD8HY9L6c\"",
+    "mtime": "2025-08-01T04:34:15.203Z",
+    "size": 149953,
+    "path": "../public/data/wiki-checkpoint.json.gz"
+  },
+  "/data/wiki-icons-checkpoint.json": {
+    "type": "application/json",
+    "etag": "\"4d3-8QzAP8Sa3SdQbZoZahwRUIRFJB4\"",
+    "mtime": "2025-07-23T05:14:17.710Z",
+    "size": 1235,
+    "path": "../public/data/wiki-icons-checkpoint.json"
+  },
+  "/data/wiki-icons-checkpoint.json.br": {
+    "type": "application/json",
+    "encoding": "br",
+    "etag": "\"175-D8Mm0a4qidsgCAamf2WcRN8HEVU\"",
+    "mtime": "2025-08-01T04:34:15.114Z",
+    "size": 373,
+    "path": "../public/data/wiki-icons-checkpoint.json.br"
+  },
+  "/data/wiki-icons-checkpoint.json.gz": {
+    "type": "application/json",
+    "encoding": "gzip",
+    "etag": "\"1a5-578zJl7MoLpfOhX/j4FJ1GnPtz0\"",
+    "mtime": "2025-08-01T04:34:15.114Z",
+    "size": 421,
+    "path": "../public/data/wiki-icons-checkpoint.json.gz"
+  },
   "/test/all-items-display-dynamic.html": {
     "type": "text/html; charset=utf-8",
     "etag": "\"425b-2RYGjnrSrdVWPGoj2b7JgiKWbhQ\"",
     "mtime": "2025-07-31T22:06:38.513Z",
     "size": 16987,
     "path": "../public/test/all-items-display-dynamic.html"
+  },
+  "/test/all-items-display-dynamic.html.br": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"b13-3JYne504Y4crEoi1o8wBWnzmbtc\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 2835,
+    "path": "../public/test/all-items-display-dynamic.html.br"
+  },
+  "/test/all-items-display-dynamic.html.gz": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"d67-g0r97qZoaxGN9aIPFA3PI6g/x7s\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 3431,
+    "path": "../public/test/all-items-display-dynamic.html.gz"
   },
   "/test/collection-log-tester.html": {
     "type": "text/html; charset=utf-8",
@@ -4485,12 +4856,44 @@ const assets = {
     "size": 24843,
     "path": "../public/test/collection-log-tester.html"
   },
+  "/test/collection-log-tester.html.br": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"fcf-D5YiD2lNH8zS2kdRnLEUzCUQuo8\"",
+    "mtime": "2025-08-01T04:34:15.117Z",
+    "size": 4047,
+    "path": "../public/test/collection-log-tester.html.br"
+  },
+  "/test/collection-log-tester.html.gz": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"12d5-2R3nXePe/yPWIVb+BQUbfqs2P3Y\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 4821,
+    "path": "../public/test/collection-log-tester.html.gz"
+  },
   "/test/robust-tester.html": {
     "type": "text/html; charset=utf-8",
     "etag": "\"3d8c-MSqE1FyOdJnsqjZ0zt/yaUJBNHQ\"",
     "mtime": "2025-07-26T17:07:44.753Z",
     "size": 15756,
     "path": "../public/test/robust-tester.html"
+  },
+  "/test/robust-tester.html.br": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"af1-OPiRbuGQj5MNUVgNggBxJ+LiUhs\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 2801,
+    "path": "../public/test/robust-tester.html.br"
+  },
+  "/test/robust-tester.html.gz": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"d63-r5FrXDp/BFbVZ8mBFR0arPpCpGg\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 3427,
+    "path": "../public/test/robust-tester.html.gz"
   },
   "/test/simple-test.html": {
     "type": "text/html; charset=utf-8",
@@ -4513,54 +4916,21 @@ const assets = {
     "size": 21015,
     "path": "../public/test/test.html"
   },
-  "/data/cache/items-complete.json": {
-    "type": "application/json",
-    "etag": "\"2917b24-WuiaxX5zQb6tP+GQQn7ABJ0F8UM\"",
-    "mtime": "2025-07-22T21:32:15.440Z",
-    "size": 43088676,
-    "path": "../public/data/cache/items-complete.json"
+  "/test/test.html.br": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"f84-cb525tSTK7b+H3SiUBE9GR5SSQY\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 3972,
+    "path": "../public/test/test.html.br"
   },
-  "/data/cache/items-icons.json": {
-    "type": "application/json",
-    "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
-    "mtime": "2025-06-30T01:05:25.748Z",
-    "size": 0,
-    "path": "../public/data/cache/items-icons.json"
-  },
-  "/data/cache/monsters-complete.json": {
-    "type": "application/json",
-    "etag": "\"ba6c70-08pRPuiXyH9NSlQ1bUf0OxicOWk\"",
-    "mtime": "2025-07-21T03:08:33.839Z",
-    "size": 12217456,
-    "path": "../public/data/cache/monsters-complete.json"
-  },
-  "/data/cache/prayers-complete.json": {
-    "type": "application/json",
-    "etag": "\"4e11-ZRCZ8MzMBjm4ZWrHHqWwb1EY9iA\"",
-    "mtime": "2025-07-21T03:08:34.090Z",
-    "size": 19985,
-    "path": "../public/data/cache/prayers-complete.json"
-  },
-  "/data/cache/wiki-items.json": {
-    "type": "application/json",
-    "etag": "\"2-vyGp6PvFo4RvsFtPoIWeCReyIC8\"",
-    "mtime": "2025-06-30T01:05:25.783Z",
-    "size": 2,
-    "path": "../public/data/cache/wiki-items.json"
-  },
-  "/data/processed/summary.json": {
-    "type": "application/json",
-    "etag": "\"14a-eZ+woDImQ0i2EpxXlDgsd0fIzeo\"",
-    "mtime": "2025-07-26T00:51:11.277Z",
-    "size": 330,
-    "path": "../public/data/processed/summary.json"
-  },
-  "/data/streaming/items-stream.jsonl": {
-    "type": "text/plain; charset=utf-8",
-    "etag": "\"32f95-bc1vzAGCNJGpgbH+QN2HI9VN8oI\"",
-    "mtime": "2025-07-24T01:07:36.454Z",
-    "size": 208789,
-    "path": "../public/data/streaming/items-stream.jsonl"
+  "/test/test.html.gz": {
+    "type": "text/html; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"129e-nyIFgtFDO02UBIsbmFddRIWXl6M\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 4766,
+    "path": "../public/test/test.html.gz"
   },
   "/docs/images/agility-example.png": {
     "type": "image/png",
@@ -4645,6 +5015,119 @@ const assets = {
     "mtime": "2025-08-01T01:09:44.548Z",
     "size": 83935,
     "path": "../public/docs/images/multi-skill-example.png"
+  },
+  "/data/cache/items-complete.json": {
+    "type": "application/json",
+    "etag": "\"2917b24-WuiaxX5zQb6tP+GQQn7ABJ0F8UM\"",
+    "mtime": "2025-07-22T21:32:15.440Z",
+    "size": 43088676,
+    "path": "../public/data/cache/items-complete.json"
+  },
+  "/data/cache/items-complete.json.br": {
+    "type": "application/json",
+    "encoding": "br",
+    "etag": "\"b744d5-nE14uTpjTS2nuh/TL62ihSg01WQ\"",
+    "mtime": "2025-08-01T04:35:13.160Z",
+    "size": 12010709,
+    "path": "../public/data/cache/items-complete.json.br"
+  },
+  "/data/cache/items-complete.json.gz": {
+    "type": "application/json",
+    "encoding": "gzip",
+    "etag": "\"ce9343-Qs5lQx6vM/A/SBej6sqZBknjrWQ\"",
+    "mtime": "2025-08-01T04:34:17.446Z",
+    "size": 13538115,
+    "path": "../public/data/cache/items-complete.json.gz"
+  },
+  "/data/cache/items-icons.json": {
+    "type": "application/json",
+    "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
+    "mtime": "2025-06-30T01:05:25.748Z",
+    "size": 0,
+    "path": "../public/data/cache/items-icons.json"
+  },
+  "/data/cache/monsters-complete.json": {
+    "type": "application/json",
+    "etag": "\"ba6c70-08pRPuiXyH9NSlQ1bUf0OxicOWk\"",
+    "mtime": "2025-07-21T03:08:33.839Z",
+    "size": 12217456,
+    "path": "../public/data/cache/monsters-complete.json"
+  },
+  "/data/cache/monsters-complete.json.br": {
+    "type": "application/json",
+    "encoding": "br",
+    "etag": "\"2c949-fYFSaJKO2VdAcko6+tOJ7cSNXno\"",
+    "mtime": "2025-08-01T04:34:22.071Z",
+    "size": 182601,
+    "path": "../public/data/cache/monsters-complete.json.br"
+  },
+  "/data/cache/monsters-complete.json.gz": {
+    "type": "application/json",
+    "encoding": "gzip",
+    "etag": "\"7db19-xlF4HaMFEO9y+k519RcjuOaegro\"",
+    "mtime": "2025-08-01T04:34:15.325Z",
+    "size": 514841,
+    "path": "../public/data/cache/monsters-complete.json.gz"
+  },
+  "/data/cache/prayers-complete.json": {
+    "type": "application/json",
+    "etag": "\"4e11-ZRCZ8MzMBjm4ZWrHHqWwb1EY9iA\"",
+    "mtime": "2025-07-21T03:08:34.090Z",
+    "size": 19985,
+    "path": "../public/data/cache/prayers-complete.json"
+  },
+  "/data/cache/prayers-complete.json.br": {
+    "type": "application/json",
+    "encoding": "br",
+    "etag": "\"21c0-5jFMmVtLQ5ye7WJvBi/52F2ayKY\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 8640,
+    "path": "../public/data/cache/prayers-complete.json.br"
+  },
+  "/data/cache/prayers-complete.json.gz": {
+    "type": "application/json",
+    "encoding": "gzip",
+    "etag": "\"23ee-CaTdqLI7Lw7l8xwR2ovJyHHA63o\"",
+    "mtime": "2025-08-01T04:34:15.116Z",
+    "size": 9198,
+    "path": "../public/data/cache/prayers-complete.json.gz"
+  },
+  "/data/cache/wiki-items.json": {
+    "type": "application/json",
+    "etag": "\"2-vyGp6PvFo4RvsFtPoIWeCReyIC8\"",
+    "mtime": "2025-06-30T01:05:25.783Z",
+    "size": 2,
+    "path": "../public/data/cache/wiki-items.json"
+  },
+  "/data/processed/summary.json": {
+    "type": "application/json",
+    "etag": "\"14a-eZ+woDImQ0i2EpxXlDgsd0fIzeo\"",
+    "mtime": "2025-07-26T00:51:11.277Z",
+    "size": 330,
+    "path": "../public/data/processed/summary.json"
+  },
+  "/data/streaming/items-stream.jsonl": {
+    "type": "text/plain; charset=utf-8",
+    "etag": "\"32f95-bc1vzAGCNJGpgbH+QN2HI9VN8oI\"",
+    "mtime": "2025-07-24T01:07:36.454Z",
+    "size": 208789,
+    "path": "../public/data/streaming/items-stream.jsonl"
+  },
+  "/data/streaming/items-stream.jsonl.br": {
+    "type": "text/plain; charset=utf-8",
+    "encoding": "br",
+    "etag": "\"3795-fZlkVoxH9tp3lp+VfTlbVB164i8\"",
+    "mtime": "2025-08-01T04:34:15.334Z",
+    "size": 14229,
+    "path": "../public/data/streaming/items-stream.jsonl.br"
+  },
+  "/data/streaming/items-stream.jsonl.gz": {
+    "type": "text/plain; charset=utf-8",
+    "encoding": "gzip",
+    "etag": "\"44f5-f3YTCJAUgAUZEGaUo4YXXDjeVG8\"",
+    "mtime": "2025-08-01T04:34:15.118Z",
+    "size": 17653,
+    "path": "../public/data/streaming/items-stream.jsonl.gz"
   }
 };
 
@@ -4838,6 +5321,150 @@ const _MbPw6O = eventHandler((event) => {
   return readAsset(id);
 });
 
+const config = {
+  database: {
+    // Database path - same for all environments since it's static game data
+    path: process.env.DB_PATH || "./data/osrs.db",
+    cacheSize: parseInt(process.env.DB_CACHE_SIZE) || 1e4,
+    walMode: process.env.DB_WAL_MODE !== "false",
+    mmapSize: parseInt(process.env.DB_MMAP_SIZE) || 268435456,
+    pageSize: parseInt(process.env.DB_PAGE_SIZE) || 4096,
+    autoVacuum: process.env.DB_AUTO_VACUUM || "incremental"
+  },
+  api: {
+    port: parseInt(process.env.PORT) || 3e3,
+    cors: {
+      origin: process.env.CORS_ORIGIN || "*",
+      credentials: process.env.CORS_CREDENTIALS === "true"
+    },
+    rateLimit: {
+      windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) || 6e4,
+      max: parseInt(process.env.RATE_LIMIT_MAX) || 100
+    },
+    requestSizeLimit: parseInt(process.env.REQUEST_SIZE_LIMIT) || 1024 * 1024
+    // 1MB
+  },
+  logging: {
+    level: process.env.LOG_LEVEL || "info",
+    format: process.env.LOG_FORMAT || "json",
+    enableConsole: process.env.LOG_ENABLE_CONSOLE !== "false",
+    enableFile: process.env.LOG_ENABLE_FILE !== "false"
+  },
+  cache: {
+    ttl: parseInt(process.env.CACHE_TTL) || 3e5,
+    // 5 minutes
+    maxSize: parseInt(process.env.CACHE_MAX_SIZE) || 1e3,
+    imageTtl: parseInt(process.env.IMAGE_CACHE_TTL) || 6e5
+    // 10 minutes
+  },
+  performance: {
+    enableCompression: process.env.ENABLE_COMPRESSION !== "false",
+    enableCaching: process.env.ENABLE_CACHING !== "false",
+    enableTiming: process.env.ENABLE_TIMING === "true"
+  }
+};
+
+const rateLimitStore = /* @__PURE__ */ new Map();
+function getClientIP(event) {
+  var _a;
+  const forwarded = getHeader(event, "x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+  const realIP = getHeader(event, "x-real-ip");
+  if (realIP) {
+    return realIP;
+  }
+  return ((_a = event.node.req.socket) == null ? void 0 : _a.remoteAddress) || "unknown";
+}
+function applyRateLimit(event) {
+  const clientIP = getClientIP(event);
+  const now = Date.now();
+  const windowStart = now - config.api.rateLimit.windowMs;
+  const clientRequests = rateLimitStore.get(clientIP) || [];
+  const recentRequests = clientRequests.filter((time) => time > windowStart);
+  if (recentRequests.length >= config.api.rateLimit.max) {
+    throw createError$1({
+      statusCode: 429,
+      statusMessage: "Too Many Requests",
+      data: {
+        message: "Rate limit exceeded",
+        retryAfter: Math.ceil((recentRequests[0] + config.api.rateLimit.windowMs - now) / 1e3)
+      }
+    });
+  }
+  recentRequests.push(now);
+  rateLimitStore.set(clientIP, recentRequests);
+  if (rateLimitStore.size > 1e3) {
+    const entries = Array.from(rateLimitStore.entries());
+    entries.slice(0, 100).forEach(([key]) => rateLimitStore.delete(key));
+  }
+}
+function applyCORS(event) {
+  setResponseHeaders(event, {
+    "Access-Control-Allow-Origin": config.api.cors.origin,
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    "Access-Control-Allow-Credentials": config.api.cors.credentials.toString(),
+    "Access-Control-Max-Age": "86400"
+    // 24 hours
+  });
+  if (getMethod(event) === "OPTIONS") {
+    throw createError$1({
+      statusCode: 200,
+      statusMessage: "OK"
+    });
+  }
+}
+async function validateRequest(event) {
+  const method = getMethod(event);
+  const path = getRequestURL(event).pathname;
+  if (method === "POST") {
+    const contentLength = getHeader(event, "content-length");
+    if (contentLength && parseInt(contentLength) > config.api.requestSizeLimit) {
+      throw createError$1({
+        statusCode: 413,
+        statusMessage: "Payload Too Large",
+        data: {
+          message: "Request body too large",
+          maxSize: config.api.requestSizeLimit,
+          receivedSize: parseInt(contentLength)
+        }
+      });
+    }
+  }
+  if (path.startsWith("/api/")) {
+    if (method === "POST") {
+      const contentType = getHeader(event, "content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw createError$1({
+          statusCode: 400,
+          statusMessage: "Bad Request",
+          data: { message: "Content-Type must be application/json" }
+        });
+      }
+    }
+  }
+}
+const _P3lG1i = defineEventHandler(async (event) => {
+  try {
+    applyCORS(event);
+    if (getRequestURL(event).pathname.startsWith("/api/")) {
+      applyRateLimit(event);
+    }
+    await validateRequest(event);
+  } catch (error) {
+    if (error.statusCode) {
+      throw error;
+    }
+    console.error("Security middleware error:", error);
+    throw createError$1({
+      statusCode: 500,
+      statusMessage: "Internal Server Error"
+    });
+  }
+});
+
 const _lazy_TslISg = () => import('../routes/api/collection-log.post.mjs');
 const _lazy_mumCVE = () => import('../routes/api/progress-image.post.mjs');
 const _lazy_KiCd5f = () => import('../routes/docs/collection-log.get.mjs');
@@ -4847,6 +5474,7 @@ const _lazy_rCuUod = () => import('../routes/docs/monsters.get.mjs');
 const _lazy_OB_VPA = () => import('../routes/docs/prayers.get.mjs');
 const _lazy_6MXOI6 = () => import('../routes/docs/progress-image.get.mjs');
 const _lazy_vq9uv7 = () => import('../routes/docs/search.get.mjs');
+const _lazy_BAVcmY = () => import('../routes/health.get.mjs');
 const _lazy_MmDG6x = () => import('../routes/index.get2.mjs');
 const _lazy_Nt0PIp = () => import('../routes/items-display-test.get.mjs');
 const _lazy_aaHfqf = () => import('../routes/osrs/equipment/_id_.get.mjs');
@@ -4870,6 +5498,7 @@ const _lazy_hhItcL = () => import('../routes/tests-all-items-display.get.mjs');
 
 const handlers = [
   { route: '', handler: _MbPw6O, lazy: false, middleware: true, method: undefined },
+  { route: '', handler: _P3lG1i, lazy: false, middleware: true, method: undefined },
   { route: '/api/collection-log', handler: _lazy_TslISg, lazy: true, middleware: false, method: "post" },
   { route: '/api/progress-image', handler: _lazy_mumCVE, lazy: true, middleware: false, method: "post" },
   { route: '/docs/collection-log', handler: _lazy_KiCd5f, lazy: true, middleware: false, method: "get" },
@@ -4879,6 +5508,7 @@ const handlers = [
   { route: '/docs/prayers', handler: _lazy_OB_VPA, lazy: true, middleware: false, method: "get" },
   { route: '/docs/progress-image', handler: _lazy_6MXOI6, lazy: true, middleware: false, method: "get" },
   { route: '/docs/search', handler: _lazy_vq9uv7, lazy: true, middleware: false, method: "get" },
+  { route: '/health', handler: _lazy_BAVcmY, lazy: true, middleware: false, method: "get" },
   { route: '/', handler: _lazy_MmDG6x, lazy: true, middleware: false, method: "get" },
   { route: '/items-display-test', handler: _lazy_Nt0PIp, lazy: true, middleware: false, method: "get" },
   { route: '/osrs/equipment/:id', handler: _lazy_aaHfqf, lazy: true, middleware: false, method: "get" },
@@ -5285,5 +5915,5 @@ function setupGracefulShutdown(listener, nitroApp) {
   });
 }
 
-export { trapUnhandledNodeErrors as a, useNitroApp as b, defineEventHandler as c, destr as d, createError$1 as e, setHeader as f, getQuery as g, getRouterParam as h, readBody as r, setupGracefulShutdown as s, toNodeListener as t, useRuntimeConfig as u };
+export { trapUnhandledNodeErrors as a, useNitroApp as b, defineEventHandler as c, destr as d, createError$1 as e, setHeader as f, config as g, getQuery as h, getRouterParam as i, readBody as r, setupGracefulShutdown as s, toNodeListener as t, useRuntimeConfig as u };
 //# sourceMappingURL=nitro.mjs.map

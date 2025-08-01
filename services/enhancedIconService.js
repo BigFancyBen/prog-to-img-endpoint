@@ -19,8 +19,7 @@ class EnhancedIconService {
   async getWikiImageNames(itemName) {
     try {
       const wikiUrl = `https://oldschool.runescape.wiki/w/${encodeURIComponent(itemName.replace(/ /g, '_'))}`;
-      console.log(`    🔍 Parsing wiki page: ${wikiUrl}`);
-      
+
       const response = await fetch(wikiUrl);
       if (!response.ok) {
         return [];
@@ -63,11 +62,10 @@ class EnhancedIconService {
       }
       
       const results = Array.from(imageNames);
-      console.log(`    ✅ Found ${results.length} relevant image names from wiki`);
-      
+
       return results;
     } catch (error) {
-      console.log(`    ❌ Error parsing wiki page: ${error.message}`);
+      
       return [];
     }
   }
@@ -186,24 +184,23 @@ class EnhancedIconService {
       
       for (const url of uniqueUrls) {
         try {
-          console.log(`  Trying: ${url}`);
+          
           const response = await fetch(url);
           
           if (response.ok) {
             const buffer = Buffer.from(await response.arrayBuffer());
-            console.log(`  ✅ Downloaded ${buffer.length} bytes`);
-            
+
             const stored = databaseService.storeIconData(itemId, buffer);
             if (stored) {
-              console.log(`  ✅ Stored icon for ${itemName}`);
+              
               this.stats.successes++;
               return { success: true, url, size: buffer.length };
             }
           } else {
-            console.log(`  ❌ HTTP ${response.status}: ${response.statusText}`);
+            
           }
         } catch (error) {
-          console.log(`  ❌ Error: ${error.message}`);
+          
         }
       }
       

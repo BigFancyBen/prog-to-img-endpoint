@@ -74,8 +74,7 @@ const collectionLogTestCases = [
 ];
 
 async function testProgressImageGeneration() {
-  console.log('\n🧪 Testing Progress Image Generation...');
-  
+
   const outputDir = 'test-output/progress-images';
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -84,7 +83,7 @@ async function testProgressImageGeneration() {
   let successCount = 0;
   for (const testCase of progressTestCases) {
     try {
-      console.log(`Testing ${testCase.name}...`);
+      
       const result = await generateProgressImage(testCase.data);
       
       if (result.statusCode === 200) {
@@ -96,24 +95,21 @@ async function testProgressImageGeneration() {
         // Save image
         const outputPath = path.join(outputDir, `${testCase.name}.png`);
         fs.writeFileSync(outputPath, imageBuffer);
-        
-        console.log(`✅ ${testCase.name} - Generated successfully`);
+
         successCount++;
       } else {
-        console.log(`❌ ${testCase.name} - Failed with status ${result.statusCode}`);
+        
       }
     } catch (error) {
-      console.log(`❌ ${testCase.name} - Error: ${error.message}`);
+      
     }
   }
-  
-  console.log(`Progress Images: ${successCount}/${progressTestCases.length} successful`);
+
   return successCount;
 }
 
 async function testCollectionLogGeneration() {
-  console.log('\n🧪 Testing Collection Log Generation...');
-  
+
   const outputDir = 'test-output/collection-logs';
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -122,7 +118,7 @@ async function testCollectionLogGeneration() {
   let successCount = 0;
   for (const testCase of collectionLogTestCases) {
     try {
-      console.log(`Testing ${testCase.name}...`);
+      
       const result = await generateCollectionLogImage(testCase.data);
       
       if (result.statusCode === 200) {
@@ -134,37 +130,29 @@ async function testCollectionLogGeneration() {
         // Save image
         const outputPath = path.join(outputDir, `${testCase.name}.png`);
         fs.writeFileSync(outputPath, imageBuffer);
-        
-        console.log(`✅ ${testCase.name} - Generated successfully`);
+
         successCount++;
       } else {
-        console.log(`❌ ${testCase.name} - Failed with status ${result.statusCode}`);
+        
       }
     } catch (error) {
-      console.log(`❌ ${testCase.name} - Error: ${error.message}`);
+      
     }
   }
-  
-  console.log(`Collection Logs: ${successCount}/${collectionLogTestCases.length} successful`);
+
   return successCount;
 }
 
 async function runAllTests() {
-  console.log('🚀 Starting Image Generation Test Suite...');
-  
+
   const progressCount = await testProgressImageGeneration();
   const collectionCount = await testCollectionLogGeneration();
-  
-  console.log('\n📊 Test Summary:');
-  console.log(`Progress Images: ${progressCount}/${progressTestCases.length}`);
-  console.log(`Collection Log Images: ${collectionCount}/${collectionLogTestCases.length}`);
-  console.log(`Total: ${progressCount + collectionCount}/${progressTestCases.length + collectionLogTestCases.length}`);
-  
+
   if (progressCount + collectionCount === progressTestCases.length + collectionLogTestCases.length) {
-    console.log('\n✅ All tests passed!');
+    
     process.exit(0);
   } else {
-    console.log('\n❌ Some tests failed. Check the logs above.');
+    
     process.exit(1);
   }
 }

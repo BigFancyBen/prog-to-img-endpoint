@@ -2,33 +2,50 @@ import Database from 'better-sqlite3'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { mkdir } from 'fs/promises'
+import { config } from '../config/environment.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Use absolute path to ensure we're always using the right database
-// For now, always use the development database to ensure it works
-const isProduction = process.env.NODE_ENV === 'production' || process.cwd().includes('.output')
-let DB_DIR = join(process.cwd(), 'data')
-let DB_PATH = join(DB_DIR, 'osrs.db')
+// Use configuration for database paths
+const DB_DIR = join(process.cwd(), 'data')
+const DB_PATH = config.database.path
 
-// Log the database path for debugging
-console.log(`🔍 Database path: ${DB_PATH}`)
-console.log(`🔍 Is production: ${isProduction}`)
-console.log(`🔍 Current working directory: ${process.cwd()}`)
+// Performance optimizations with configuration
+const CACHE_SIZE = config.database.cacheSize
+const STATEMENT_CACHE = new Map() // Prepared statement cache
+const QUERY_CACHE = new Map() // Query result cache
+const CACHE_TTL = config.cache.ttl // 5 minutes TTL
 
 /**
- * SQLite database service for OSRS data
+ * SQLite database service for OSRS data with performance optimizations
  */
 class DatabaseService {
   constructor() {
     this.db = null
+    this.initialized = false
+    this.initPromise = null
   }
 
   /**
-   * Initialize the database and create tables
+   * Initialize the database and create tables (singleton pattern)
    */
   async init() {
+    // Return existing promise if already initializing
+    if (this.initPromise) {
+      return this.initPromise
+    }
+
+    // Return immediately if already initialized
+    if (this.initialized && this.db) {
+      return
+    }
+
+    this.initPromise = this._initDatabase()
+    return this.initPromise
+  }
+
+  async _initDatabase() {
     try {
       // Ensure data directory exists
       await mkdir(DB_DIR, { recursive: true })
@@ -37,39 +54,50 @@ class DatabaseService {
       const { existsSync } = await import('fs')
       const dbExists = existsSync(DB_PATH)
       
-      console.log(`🔍 Database file exists: ${dbExists}`)
-      console.log(`🔍 Database path: ${DB_PATH}`)
-      
       // Open database connection
       this.db = new Database(DB_PATH)
       
-      // Enable WAL mode for better performance
+      // Enhanced performance optimizations with configuration
       this.db.pragma('journal_mode = WAL')
       this.db.pragma('synchronous = NORMAL')
-      this.db.pragma('cache_size = 1000000')
+      this.db.pragma(`cache_size = ${config.database.cacheSize}`)
       this.db.pragma('temp_store = memory')
+      this.db.pragma(`mmap_size = ${config.database.mmapSize}`) // 256MB memory mapping
+      this.db.pragma(`page_size = ${config.database.pageSize}`)
+      this.db.pragma(`auto_vacuum = ${config.database.autoVacuum}`)
       
       // Check if database has items before creating tables
       let itemCount = 0
       try {
         itemCount = this.db.prepare('SELECT COUNT(*) as count FROM items').get().count
-        console.log(`🔍 Existing database has ${itemCount} items`)
       } catch (error) {
-        console.log('🔍 No items table found, will create tables')
+        // Table doesn't exist, will create
       }
       
       // Create tables (this won't overwrite existing data)
       this.createTables()
       
-      // Check if database has items after creating tables
+      // Verify initialization
       try {
         itemCount = this.db.prepare('SELECT COUNT(*) as count FROM items').get().count
-        console.log(`✅ Database initialized successfully (${itemCount} items found)`)
       } catch (error) {
-        console.log('✅ Database initialized successfully (new database)')
+        // New database
       }
+      
+      this.initialized = true
+      this.initPromise = null
+      
+      console.log('Database initialized successfully', { 
+        path: DB_PATH,
+        cacheSize: config.database.cacheSize,
+        mmapSize: config.database.mmapSize
+      })
     } catch (error) {
-      console.error('❌ Failed to initialize database:', error)
+      this.initPromise = null
+      console.error('Failed to initialize database', { 
+        error: error.message,
+        path: DB_PATH
+      })
       throw error
     }
   }
@@ -357,27 +385,46 @@ class DatabaseService {
   }
 
   /**
-   * Get item by ID
+   * Get item by ID with caching
    */
   getItemById(itemId) {
-    const stmt = this.db.prepare(`
-      SELECT i.*, 
-             e.attack_stab, e.attack_slash, e.attack_crush, e.attack_magic, e.attack_ranged,
-             e.defence_stab, e.defence_slash, e.defence_crush, e.defence_magic, e.defence_ranged,
-             e.melee_strength, e.ranged_strength, e.magic_damage, e.prayer as equipment_prayer,
-             e.slot, e.requirements,
-             w.attack_speed, w.weapon_type, w.stab as weapon_stab, w.slash as weapon_slash,
-             w.crush as weapon_crush, w.magic as weapon_magic, w.ranged as weapon_ranged
-      FROM items i
-      LEFT JOIN equipment_stats e ON i.id = e.item_id
-      LEFT JOIN weapon_stats w ON i.id = w.item_id
-      WHERE i.id = ?
-    `)
+    try {
+      // Check cache first
+      const cacheKey = `item_${itemId}`
+      const cached = this.getCachedResult(cacheKey)
+      if (cached) {
+        console.log(`Database query: SELECT * FROM items WHERE id = ${itemId} (cached: true)`)
+        return cached
+      }
 
-    const row = stmt.get(itemId)
-    if (!row) return null
+      const stmt = this.getPreparedStatement(`
+        SELECT i.*, 
+               e.attack_stab, e.attack_slash, e.attack_crush, e.attack_magic, e.attack_ranged,
+               e.defence_stab, e.defence_slash, e.defence_crush, e.defence_magic, e.defence_ranged,
+               e.melee_strength, e.ranged_strength, e.magic_damage, e.prayer as equipment_prayer,
+               e.slot, e.requirements,
+               w.attack_speed, w.weapon_type, w.stab as weapon_stab, w.slash as weapon_slash,
+               w.crush as weapon_crush, w.magic as weapon_magic, w.ranged as weapon_ranged
+        FROM items i
+        LEFT JOIN equipment_stats e ON i.id = e.item_id
+        LEFT JOIN weapon_stats w ON i.id = w.item_id
+        WHERE i.id = ?
+      `)
 
-    return this.formatItemFromRow(row)
+      const row = stmt.get(itemId)
+      if (!row) return null
+
+      const result = this.formatItemFromRow(row)
+      
+      // Cache the result
+      this.setCachedResult(cacheKey, result)
+      
+      console.log(`Database query: SELECT * FROM items WHERE id = ${itemId} (cached: false)`)
+      return result
+    } catch (error) {
+      console.error(`Database error: SELECT * FROM items WHERE id = ${itemId}`, error)
+      return null
+    }
   }
 
   /**
@@ -407,7 +454,7 @@ class DatabaseService {
   }
 
   /**
-   * Search items by name only
+   * Search items by name only with caching
    */
   searchItemsByNameOnly(query, limit = 10) {
     if (!this.db) {
@@ -420,7 +467,13 @@ class DatabaseService {
       return []
     }
     
-    console.log(`🔍 Database search for: "${cleanQuery}"`)
+    // Check cache first
+    const cacheKey = `search_${cleanQuery}_${limit}`
+    const cached = this.getCachedResult(cacheKey)
+    if (cached) {
+              console.log(`Database query: SELECT * FROM items WHERE name LIKE '%${cleanQuery}%' (cached: true, limit: ${limit})`)
+      return cached
+    }
     
     const stmt = this.db.prepare(`
       SELECT i.*, 
@@ -442,10 +495,13 @@ class DatabaseService {
 
     const searchPattern = `%${cleanQuery}%`
     const rows = stmt.all(searchPattern, cleanQuery, limit)
+    const result = rows.map(row => this.formatItemFromRow(row))
     
-    console.log(`🔍 Database search returned ${rows.length} results`)
+    // Cache the result
+    this.setCachedResult(cacheKey, result)
     
-    return rows.map(row => this.formatItemFromRow(row))
+            console.log(`Database query: SELECT * FROM items WHERE name LIKE '%${cleanQuery}%' (cached: false, limit: ${limit}, results: ${result.length})`)
+    return result
   }
 
   /**
@@ -631,6 +687,37 @@ class DatabaseService {
       weapons: weaponCount,
       monsters: monsterCount,
       prayers: prayerCount
+    }
+  }
+
+  /**
+   * Get cached result or null if not found/expired
+   */
+  getCachedResult(key) {
+    const cached = QUERY_CACHE.get(key)
+    if (!cached) return null
+    
+    if (Date.now() - cached.timestamp > CACHE_TTL) {
+      QUERY_CACHE.delete(key)
+      return null
+    }
+    
+    return cached.data
+  }
+
+  /**
+   * Set cached result with timestamp
+   */
+  setCachedResult(key, data) {
+    QUERY_CACHE.set(key, {
+      data,
+      timestamp: Date.now()
+    })
+    
+    // Cleanup old entries if cache is too large
+    if (QUERY_CACHE.size > config.cache.maxSize) {
+      const entries = Array.from(QUERY_CACHE.entries())
+      entries.slice(0, 100).forEach(([key]) => QUERY_CACHE.delete(key))
     }
   }
 

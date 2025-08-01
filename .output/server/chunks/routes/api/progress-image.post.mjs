@@ -8,12 +8,15 @@ import 'node:buffer';
 import 'node:fs';
 import 'node:url';
 import 'node:path';
+import 'chokidar';
+import 'anymatch';
 import 'node:crypto';
 import 'sharp';
 import 'path';
 import 'url';
 import 'fs/promises';
 import '../../_/osrsDataService.mjs';
+import '../../_/databaseService.mjs';
 import 'better-sqlite3';
 import 'https';
 

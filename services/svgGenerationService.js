@@ -17,10 +17,8 @@ const __dirname = dirname(__filename)
  * @returns {Promise<string>} SVG markup
  */
 export async function generateProgressSVG(data) {
-  // Ensure database is initialized
-  if (!databaseService.db) {
-    await databaseService.init()
-  }
+  // Ensure database is initialized (singleton pattern)
+  await databaseService.init()
   
   const titleHeight = CANVAS_CONFIG.TITLE_HEIGHT
   
@@ -107,22 +105,15 @@ export async function generateProgressSVG(data) {
  * @returns {Promise<string>} SVG markup
  */
 export async function generateCollectionLogSVG(data) {
-  // Ensure database is initialized
-  if (!databaseService.db) {
-    await databaseService.init()
-  }
+  // Ensure database is initialized (singleton pattern)
+  await databaseService.init()
   
   const { itemName, userName } = data
   
   const { WIDTH, HEIGHT, ICON_SIZE, ICON_POSITION } = COLLECTION_LOG_CONFIG
   
-  // Initialize database
-  console.log('🔍 Initializing database for collection log generation...')
-  await databaseService.init()
-  
   // Verify database is working
   const stats = databaseService.getStats()
-  console.log('🔍 Database stats:', stats)
   
   if (stats.items === 0) {
     throw new Error('Database appears to be empty or not properly initialized')
@@ -136,18 +127,11 @@ export async function generateCollectionLogSVG(data) {
   }
   
   // Find item in database and get its icon
-  console.log(`🔍 Searching for item: "${data.itemName}"`)
   const itemData = await databaseService.searchItemsByNameOnly(data.itemName)
-  console.log(`🔍 Search results: ${itemData ? itemData.length : 'null'} items found`)
   
   if (!itemData || itemData.length === 0) {
     // Try a broader search to help with debugging
-    console.log(`🔍 No exact match found, trying broader search...`)
     const broaderResults = await databaseService.searchItemsByNameOnly('Leather body', 10)
-    console.log(`🔍 Broader search results: ${broaderResults.length} items found`)
-    broaderResults.forEach(item => {
-      console.log(`  - ${item.name} (ID: ${item.id})`)
-    })
     
     throw new Error(`Item not found: ${data.itemName}. Database contains ${stats.items} items. Please check the item name spelling or try a different item.`)
   }

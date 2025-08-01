@@ -9,6 +9,7 @@
     "dev": "nitro dev",
     "start": "node .output/server/index.mjs",
     "preview": "nitro preview",
+    "optimize": "node scripts/optimize-performance.js",
     "fetch-data": "node scripts/comprehensiveDataFetcher.js",
     "fetch-data-fast": "node scripts/runDataFetch.js",
     "fetch-smart": "node scripts/smartItemFetcher.js",
@@ -24,12 +25,18 @@
     "test-database": "node scripts/testDatabase.js",
     "test-scraper-sqlite": "node scripts/testScraperSQLite.js",
     "test-database-api": "node scripts/testDatabaseAPI.js",
-    "test": "node test-runner.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:integration": "jest --testPathPattern=integration",
     "test:progress": "node test-runner.js --progress",
     "test:collection": "node test-runner.js --collection",
     "test:update": "node test-runner.js --update",
     "update": "npm run update-docs && npm run test",
-    "update-docs": "node scripts/update-doc-images.js"
+    "update-docs": "node scripts/update-doc-images.js",
+    "lint": "eslint . --ext .js,.ts",
+    "format": "prettier --write .",
+    "health": "curl http://localhost:3000/health"
   },
   "dependencies": {
     "axios": "^1.6.2",
@@ -38,23 +45,26 @@
     "nitropack": "^2.11.13",
     "puppeteer": "^24.15.0",
     "sharp": "^0.32.6",
+    "winston": "^3.17.0",
     "wtf_wikipedia": "^10.1.5",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.3",
     "jest": "^29.7.0",
     "jest-environment-node": "^29.7.0",
     "pixelmatch": "^5.3.0",
-    "pngjs": "^7.0.0"
+    "pngjs": "^7.0.0",
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "jest": {
     "preset": "default",
-    "extensionsToTreatAsEsm": [".js"],
+    "extensionsToTreatAsEsm": [
+      ".js"
+    ],
     "globals": {
       "ts-jest": {
         "useESM": true

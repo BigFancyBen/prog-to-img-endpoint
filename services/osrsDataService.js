@@ -11,17 +11,13 @@ class OSRSDataService {
    */
   static async getItemById(itemId, enableWikiLookup = true) {
     try {
-      // Ensure database is initialized
-      if (!databaseService.db) {
-        await databaseService.init()
-      }
+      // Ensure database is initialized (singleton pattern)
+      await databaseService.init()
 
       // Try to get from database first
       let itemData = databaseService.getItemById(itemId)
       
       if (!itemData && enableWikiLookup) {
-        console.log(`🔍 Item ${itemId} not found in database, attempting wiki lookup...`)
-        
         try {
           // Use WikiLookupService for dynamic lookup
           const wikiService = new WikiLookupService()
@@ -37,13 +33,9 @@ class OSRSDataService {
             
             databaseService.insertItem(dbItemData)
             itemData = databaseService.getItemById(itemId)
-            
-            if (itemData) {
-              console.log(`✅ Found item ${itemId} via wiki lookup and added to database`)
-            }
           }
         } catch (error) {
-          console.error(`❌ Wiki lookup failed for item ${itemId}:`, error.message)
+          // Silently fail wiki lookup
         }
       }
       
@@ -65,10 +57,8 @@ class OSRSDataService {
    */
   static async getItemByName(name) {
     try {
-      // Ensure database is initialized
-      if (!databaseService.db) {
-        await databaseService.init()
-      }
+      // Ensure database is initialized (singleton pattern)
+      await databaseService.init()
 
       // Search for exact name match (case-insensitive)
       const item = databaseService.db.prepare(`
@@ -82,19 +72,16 @@ class OSRSDataService {
       }
       
       // If not found in database, try wiki lookup
-      console.log(`🔍 Item "${name}" not found in database, attempting wiki lookup...`)
-      
       try {
         // Use WikiLookupService for dynamic lookup
         const wikiService = new WikiLookupService()
         const foundItem = await wikiService.lookupItemByName(name)
         
         if (foundItem) {
-          console.log(`✅ Found item "${name}" via wiki lookup`)
           return foundItem
         }
       } catch (error) {
-        console.error(`❌ Wiki lookup failed for item "${name}":`, error.message)
+        // Silently fail wiki lookup
       }
       
       return null
@@ -115,10 +102,7 @@ class OSRSDataService {
       }
 
       const items = await databaseService.searchItemsByNameOnly(query, limit)
-      console.log(`🔍 Database search for "${query}" returned ${items.length} items`)
-      
       if (items.length === 0) {
-        console.log(`🔍 No items found for "${query}" in database, attempting wiki lookup...`)
         
         try {
           // Use WikiLookupService for dynamic lookup

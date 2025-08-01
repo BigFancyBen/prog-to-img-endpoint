@@ -8,6 +8,8 @@ import 'node:buffer';
 import 'node:fs';
 import 'node:url';
 import 'node:path';
+import 'chokidar';
+import 'anymatch';
 import 'node:crypto';
 
 const test_get = defineEventHandler(async (event) => {

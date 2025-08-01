@@ -1,4 +1,4 @@
-import { c as defineEventHandler, h as getRouterParam, e as createError } from '../../../_/nitro.mjs';
+import { c as defineEventHandler, i as getRouterParam, e as createError } from '../../../_/nitro.mjs';
 import { O as OSRSDataService } from '../../../_/osrsDataService.mjs';
 import 'node:http';
 import 'node:https';
@@ -7,7 +7,10 @@ import 'node:buffer';
 import 'node:fs';
 import 'node:url';
 import 'node:path';
+import 'chokidar';
+import 'anymatch';
 import 'node:crypto';
+import '../../../_/databaseService.mjs';
 import 'better-sqlite3';
 import 'path';
 import 'url';

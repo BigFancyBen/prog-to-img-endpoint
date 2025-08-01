@@ -1,0 +1,6 @@
+{"error":"no such table: equipment","level":"warn","message":"Could not get database statistics","timestamp":"2025-08-01T04:29:30.083Z"}
+{"databaseStats":{"equipment":0,"items":0,"monsters":0,"prayers":0,"weapons":0},"level":"info","memoryUsage":{"external":3,"heapTotal":13,"heapUsed":12,"rss":78},"message":"Health check completed","responseTime":2,"timestamp":"2025-08-01T04:29:30.084Z"}
+{"error":"no such table: equipment","level":"warn","message":"Could not get database statistics","timestamp":"2025-08-01T04:30:25.276Z"}
+{"databaseStats":{"equipment":0,"items":0,"monsters":0,"prayers":0,"weapons":0},"level":"info","memoryUsage":{"external":4,"heapTotal":14,"heapUsed":12,"rss":83},"message":"Health check completed","responseTime":1,"timestamp":"2025-08-01T04:30:25.277Z"}
+{"error":"no such table: equipment","level":"warn","message":"Could not get database statistics","timestamp":"2025-08-01T04:32:27.667Z"}
+{"databaseStats":{"equipment":0,"items":0,"monsters":0,"prayers":0,"weapons":0},"level":"info","memoryUsage":{"external":4,"heapTotal":17,"heapUsed":12,"rss":48},"message":"Health check completed","responseTime":13,"timestamp":"2025-08-01T04:32:27.669Z"}

@@ -2,7 +2,8 @@ import process from 'node:process';globalThis._importMeta_=globalThis._importMet
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { readFile } from 'fs/promises';
-import { O as OSRSDataService, I as IconService, d as databaseService } from './osrsDataService.mjs';
+import { O as OSRSDataService, I as IconService } from './osrsDataService.mjs';
+import { d as databaseService } from './databaseService.mjs';
 
 const __filename$2 = fileURLToPath(globalThis._importMeta_.url);
 const __dirname = dirname(__filename$2);
@@ -63,7 +64,8 @@ function getCurrentDate() {
 const __filename$1 = fileURLToPath(globalThis._importMeta_.url);
 dirname(__filename$1);
 const cache = /* @__PURE__ */ new Map();
-const CACHE_TTL = 60 * 60 * 1e3;
+const CACHE_TTL$1 = 30 * 60 * 1e3;
+const MAX_CACHE_SIZE = 500;
 class FileService {
   /**
    * Get item data from database by ID with automatic wiki lookup
@@ -75,10 +77,15 @@ class FileService {
     const cacheKey = `item_${itemId}`;
     if (cache.has(cacheKey)) {
       const cached = cache.get(cacheKey);
-      if (Date.now() - cached.timestamp < CACHE_TTL) {
+      if (Date.now() - cached.timestamp < CACHE_TTL$1) {
         return cached.data;
       }
       cache.delete(cacheKey);
+    }
+    if (cache.size > MAX_CACHE_SIZE) {
+      const entries = Array.from(cache.entries());
+      entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+      entries.slice(0, 100).forEach(([key]) => cache.delete(key));
     }
     try {
       const itemData = await OSRSDataService.getItemById(itemId, enableWikiLookup);
@@ -152,7 +159,7 @@ class FileService {
     const cacheKey = `search_${itemName.toLowerCase()}`;
     if (cache.has(cacheKey)) {
       const cached = cache.get(cacheKey);
-      if (Date.now() - cached.timestamp < CACHE_TTL) {
+      if (Date.now() - cached.timestamp < CACHE_TTL$1) {
         return cached.data;
       }
       cache.delete(cacheKey);
@@ -259,9 +266,7 @@ const __filename = fileURLToPath(globalThis._importMeta_.url);
 dirname(__filename);
 async function generateProgressSVG(data) {
   var _a, _b, _c, _d;
-  if (!databaseService.db) {
-    await databaseService.init();
-  }
+  await databaseService.init();
   const titleHeight = CANVAS_CONFIG.TITLE_HEIGHT;
   let lootHeight = 0;
   if (((_a = data == null ? void 0 : data.loot) == null ? void 0 : _a.length) > 0) {
@@ -319,15 +324,10 @@ async function generateProgressSVG(data) {
   return svg;
 }
 async function generateCollectionLogSVG(data) {
-  if (!databaseService.db) {
-    await databaseService.init();
-  }
+  await databaseService.init();
   const { itemName, userName } = data;
   const { WIDTH, HEIGHT, ICON_SIZE, ICON_POSITION } = COLLECTION_LOG_CONFIG;
-  console.log("\u{1F50D} Initializing database for collection log generation...");
-  await databaseService.init();
   const stats = databaseService.getStats();
-  console.log("\u{1F50D} Database stats:", stats);
   if (stats.items === 0) {
     throw new Error("Database appears to be empty or not properly initialized");
   }
@@ -335,16 +335,9 @@ async function generateCollectionLogSVG(data) {
   if (!bgImageBase64) {
     throw new Error("Collection log background image could not be loaded");
   }
-  console.log(`\u{1F50D} Searching for item: "${data.itemName}"`);
   const itemData = await databaseService.searchItemsByNameOnly(data.itemName);
-  console.log(`\u{1F50D} Search results: ${itemData ? itemData.length : "null"} items found`);
   if (!itemData || itemData.length === 0) {
-    console.log(`\u{1F50D} No exact match found, trying broader search...`);
-    const broaderResults = await databaseService.searchItemsByNameOnly("Leather body", 10);
-    console.log(`\u{1F50D} Broader search results: ${broaderResults.length} items found`);
-    broaderResults.forEach((item2) => {
-      console.log(`  - ${item2.name} (ID: ${item2.id})`);
-    });
+    await databaseService.searchItemsByNameOnly("Leather body", 10);
     throw new Error(`Item not found: ${data.itemName}. Database contains ${stats.items} items. Please check the item name spelling or try a different item.`);
   }
   const item = itemData[0];
@@ -521,14 +514,41 @@ function escapeXML(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
+const IMAGE_CACHE = /* @__PURE__ */ new Map();
+const CACHE_TTL = 10 * 60 * 1e3;
+function getCachedImage(cacheKey, data) {
+  const cached = IMAGE_CACHE.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  return null;
+}
+function setCachedImage(cacheKey, data) {
+  IMAGE_CACHE.set(cacheKey, {
+    data,
+    timestamp: Date.now()
+  });
+  if (IMAGE_CACHE.size > 100) {
+    const entries = Array.from(IMAGE_CACHE.entries());
+    entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+    entries.slice(0, 20).forEach(([key]) => IMAGE_CACHE.delete(key));
+  }
+}
 async function generateProgressImage(data) {
   try {
+    const cacheKey = `progress_${JSON.stringify(data)}`;
+    const cached = getCachedImage(cacheKey, data);
+    if (cached) {
+      return cached;
+    }
     const svgString = await generateProgressSVG(data);
     const pngBuffer = await svgToPng(svgString);
-    return {
+    const result = {
       statusCode: 200,
       body: JSON.stringify(`data:image/png;base64,${pngBuffer.toString("base64")}`)
     };
+    setCachedImage(cacheKey, result);
+    return result;
   } catch (error) {
     console.error("Error generating progress image:", error);
     throw error;
@@ -536,12 +556,19 @@ async function generateProgressImage(data) {
 }
 async function generateCollectionLogImage(data) {
   try {
+    const cacheKey = `collection_${JSON.stringify(data)}`;
+    const cached = getCachedImage(cacheKey, data);
+    if (cached) {
+      return cached;
+    }
     const svgString = await generateCollectionLogSVG(data);
     const pngBuffer = await svgToPng(svgString);
-    return {
+    const result = {
       statusCode: 200,
       body: JSON.stringify(`data:image/png;base64,${pngBuffer.toString("base64")}`)
     };
+    setCachedImage(cacheKey, result);
+    return result;
   } catch (error) {
     console.error("Error generating collection log image:", error);
     throw error;

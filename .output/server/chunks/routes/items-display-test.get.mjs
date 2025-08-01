@@ -1,4 +1,4 @@
-import { c as defineEventHandler, g as getQuery, f as setHeader, e as createError } from '../_/nitro.mjs';
+import { c as defineEventHandler, h as getQuery, f as setHeader, e as createError } from '../_/nitro.mjs';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import 'node:http';
@@ -8,6 +8,8 @@ import 'node:buffer';
 import 'node:fs';
 import 'node:url';
 import 'node:path';
+import 'chokidar';
+import 'anymatch';
 import 'node:crypto';
 
 const itemsDisplayTest_get = defineEventHandler(async (event) => {

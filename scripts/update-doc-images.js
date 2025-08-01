@@ -135,7 +135,7 @@ const collectionLogExamples = [
 
 async function generateAndSaveImage(generator, data, filename, outputDir) {
   try {
-    console.log(`Generating ${filename}...`);
+    
     const result = await generator(data);
     
     if (result.statusCode === 200) {
@@ -147,7 +147,7 @@ async function generateAndSaveImage(generator, data, filename, outputDir) {
       // Save image
       const outputPath = path.join(outputDir, filename);
       fs.writeFileSync(outputPath, imageBuffer);
-      console.log(`✅ Saved ${filename}`);
+      
       return true;
     } else {
       console.error(`❌ Failed to generate ${filename}: ${result.statusCode}`);
@@ -160,8 +160,7 @@ async function generateAndSaveImage(generator, data, filename, outputDir) {
 }
 
 async function updateProgressImageDocs() {
-  console.log('\n🔄 Updating Progress Image Documentation...');
-  
+
   const outputDir = 'public/docs/images';
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -177,14 +176,12 @@ async function updateProgressImageDocs() {
     );
     if (success) successCount++;
   }
-  
-  console.log(`✅ Generated ${successCount}/${progressExamples.length} progress images`);
+
   return successCount;
 }
 
 async function updateCollectionLogDocs() {
-  console.log('\n🔄 Updating Collection Log Documentation...');
-  
+
   const outputDir = 'public/docs/images';
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -200,26 +197,19 @@ async function updateCollectionLogDocs() {
     );
     if (success) successCount++;
   }
-  
-  console.log(`✅ Generated ${successCount}/${collectionLogExamples.length} collection log images`);
+
   return successCount;
 }
 
 async function updateAllDocImages() {
-  console.log('🚀 Starting documentation image update...');
-  
+
   const progressCount = await updateProgressImageDocs();
   const collectionCount = await updateCollectionLogDocs();
-  
-  console.log('\n📊 Summary:');
-  console.log(`Progress Images: ${progressCount}/${progressExamples.length}`);
-  console.log(`Collection Log Images: ${collectionCount}/${collectionLogExamples.length}`);
-  console.log(`Total: ${progressCount + collectionCount}/${progressExamples.length + collectionLogExamples.length}`);
-  
+
   if (progressCount + collectionCount === progressExamples.length + collectionLogExamples.length) {
-    console.log('\n✅ All documentation images updated successfully!');
+    
   } else {
-    console.log('\n⚠️  Some images failed to generate. Check the logs above.');
+    
     process.exit(1);
   }
 }

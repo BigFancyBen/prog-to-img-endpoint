@@ -6,6 +6,8 @@ import 'node:buffer';
 import 'node:fs';
 import 'node:url';
 import 'node:path';
+import 'chokidar';
+import 'anymatch';
 import 'node:crypto';
 
 const cert = process.env.NITRO_SSL_CERT;

@@ -653,8 +653,7 @@ class WikiLookupService {
   async getWikiImageNames(itemName) {
     try {
       const wikiUrl = `https://oldschool.runescape.wiki/w/${encodeURIComponent(itemName.replace(/ /g, '_'))}`;
-      console.log(`    🔍 Parsing wiki page: ${wikiUrl}`);
-      
+
       const response = await fetch(wikiUrl);
       if (!response.ok) {
         return [];
@@ -687,7 +686,7 @@ class WikiLookupService {
       
       return Array.from(imageNames);
     } catch (error) {
-      console.log(`    ❌ Error parsing wiki page: ${error.message}`);
+      
       return [];
     }
   }
@@ -853,8 +852,7 @@ class WikiLookupService {
         ];
         
         const uniqueUrls = [...new Set(urlPatterns)];
-        console.log(`  📊 Generated ${uniqueUrls.length} intelligent URL patterns`);
-        
+
         for (let i = 0; i < uniqueUrls.length; i++) {
           const tryUrl = uniqueUrls[i]
           
