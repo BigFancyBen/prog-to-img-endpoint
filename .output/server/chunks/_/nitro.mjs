@@ -4198,47 +4198,12 @@ const plugins = [
 ];
 
 const assets = {
-  "/dynamic-items.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"425c-C5B5OslXiEugnX3JOev28qmvicU\"",
-    "mtime": "2025-07-31T21:07:58.669Z",
-    "size": 16988,
-    "path": "../public/dynamic-items.html"
-  },
   "/index.html": {
     "type": "text/html; charset=utf-8",
-    "etag": "\"2c69-IdRAqkSKTe55K3fqKViZyILd9r4\"",
-    "mtime": "2025-07-31T23:36:20.920Z",
-    "size": 11369,
+    "etag": "\"2d6b-sIT5jhB9MY+h8svB8PH96eFxgnk\"",
+    "mtime": "2025-08-01T00:15:44.970Z",
+    "size": 11627,
     "path": "../public/index.html"
-  },
-  "/docs/items.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"3149-IeFxTi22mF/GiWNPoWSy+nZtZCY\"",
-    "mtime": "2025-07-26T04:26:26.756Z",
-    "size": 12617,
-    "path": "../public/docs/items.html"
-  },
-  "/docs/monsters.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"3015-LUt1Bt7pCmsON/WB5i+oWHBGuGU\"",
-    "mtime": "2025-07-26T04:26:26.756Z",
-    "size": 12309,
-    "path": "../public/docs/monsters.html"
-  },
-  "/docs/prayers.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"1b29-myWDzwlplqXzA9SIlyc9FYT5WBQ\"",
-    "mtime": "2025-07-26T04:26:26.756Z",
-    "size": 6953,
-    "path": "../public/docs/prayers.html"
-  },
-  "/docs/progress-image.html": {
-    "type": "text/html; charset=utf-8",
-    "etag": "\"2a00-m535DPzq89NEg63QXOl9BaflGgw\"",
-    "mtime": "2025-07-26T04:26:26.756Z",
-    "size": 10752,
-    "path": "../public/docs/progress-image.html"
   },
   "/data/fetch-checkpoint.json": {
     "type": "application/json",
@@ -4257,14 +4222,14 @@ const assets = {
   "/data/osrs.db-shm": {
     "type": "text/plain; charset=utf-8",
     "etag": "\"8000-YI7rdIgEJFPJykD34TmPwaJw8/Q\"",
-    "mtime": "2025-07-31T23:35:36.051Z",
+    "mtime": "2025-08-01T00:34:54.708Z",
     "size": 32768,
     "path": "../public/data/osrs.db-shm"
   },
   "/data/osrs.db-wal": {
     "type": "text/plain; charset=utf-8",
     "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
-    "mtime": "2025-07-31T23:35:36.050Z",
+    "mtime": "2025-08-01T00:34:54.707Z",
     "size": 0,
     "path": "../public/data/osrs.db-wal"
   },
@@ -4282,61 +4247,47 @@ const assets = {
     "size": 1235,
     "path": "../public/data/wiki-icons-checkpoint.json"
   },
-  "/font/runescape.ttf": {
-    "type": "font/ttf",
-    "etag": "\"37a8-H+uLKLjAWQS8z/4bBxweWv6wUkI\"",
-    "mtime": "2025-06-30T00:45:10.329Z",
-    "size": 14248,
-    "path": "../public/font/runescape.ttf"
-  },
-  "/font/runescape_chat.ttf": {
-    "type": "font/ttf",
-    "etag": "\"8e30-HjlH00zcqcuPSYDr/Pnaf7qRh7s\"",
-    "mtime": "2025-07-31T18:09:09.000Z",
-    "size": 36400,
-    "path": "../public/font/runescape_chat.ttf"
-  },
-  "/test/all-items-display-dynamic.html": {
+  "/docs/collection-log.html": {
     "type": "text/html; charset=utf-8",
-    "etag": "\"425b-2RYGjnrSrdVWPGoj2b7JgiKWbhQ\"",
-    "mtime": "2025-07-31T22:06:38.513Z",
-    "size": 16987,
-    "path": "../public/test/all-items-display-dynamic.html"
+    "etag": "\"4aa1-G7FZK7cnU/ol/RnHeY8t/GRiMC8\"",
+    "mtime": "2025-08-01T00:12:55.672Z",
+    "size": 19105,
+    "path": "../public/docs/collection-log.html"
   },
-  "/test/collection-log-tester.html": {
+  "/docs/items.html": {
     "type": "text/html; charset=utf-8",
-    "etag": "\"610b-/aMmOrBfu7C0Xn8rfw6fpLha7OQ\"",
-    "mtime": "2025-07-26T17:07:44.753Z",
-    "size": 24843,
-    "path": "../public/test/collection-log-tester.html"
+    "etag": "\"708a-+4KWPwD7rXp8E43bvUPvFlGxCF0\"",
+    "mtime": "2025-08-01T00:35:28.615Z",
+    "size": 28810,
+    "path": "../public/docs/items.html"
   },
-  "/test/robust-tester.html": {
+  "/docs/monsters.html": {
     "type": "text/html; charset=utf-8",
-    "etag": "\"3d8c-MSqE1FyOdJnsqjZ0zt/yaUJBNHQ\"",
-    "mtime": "2025-07-26T17:07:44.753Z",
-    "size": 15756,
-    "path": "../public/test/robust-tester.html"
+    "etag": "\"3015-LUt1Bt7pCmsON/WB5i+oWHBGuGU\"",
+    "mtime": "2025-07-26T04:26:26.756Z",
+    "size": 12309,
+    "path": "../public/docs/monsters.html"
   },
-  "/test/simple-test.html": {
+  "/docs/prayers.html": {
     "type": "text/html; charset=utf-8",
-    "etag": "\"76-iMw9xpz7zqjWqfGBqjQS34fK9fY\"",
-    "mtime": "2025-07-31T23:19:09.576Z",
-    "size": 118,
-    "path": "../public/test/simple-test.html"
+    "etag": "\"1b29-myWDzwlplqXzA9SIlyc9FYT5WBQ\"",
+    "mtime": "2025-07-26T04:26:26.756Z",
+    "size": 6953,
+    "path": "../public/docs/prayers.html"
   },
-  "/test/simple-test.html~": {
-    "type": "text/plain; charset=utf-8",
-    "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
-    "mtime": "2025-07-31T23:19:11.123Z",
-    "size": 0,
-    "path": "../public/test/simple-test.html~"
-  },
-  "/test/test.html": {
+  "/docs/progress-image.html": {
     "type": "text/html; charset=utf-8",
-    "etag": "\"5217-RLi/KQTvtaOLK5LesV+3hhGaCHA\"",
-    "mtime": "2025-07-31T18:46:12.926Z",
-    "size": 21015,
-    "path": "../public/test/test.html"
+    "etag": "\"6b9f-SiuTQYNd84+UljxWtedQ2u/QXVI\"",
+    "mtime": "2025-08-01T00:12:55.672Z",
+    "size": 27551,
+    "path": "../public/docs/progress-image.html"
+  },
+  "/docs/search.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"2958-1FuLBOAZvXoTfTkHV1Rum2ClIWY\"",
+    "mtime": "2025-07-31T23:50:06.873Z",
+    "size": 10584,
+    "path": "../public/docs/search.html"
   },
   "/icons/agility.png": {
     "type": "image/png",
@@ -4506,6 +4457,62 @@ const assets = {
     "size": 233,
     "path": "../public/icons/woodcutting.png"
   },
+  "/test/all-items-display-dynamic.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"425b-2RYGjnrSrdVWPGoj2b7JgiKWbhQ\"",
+    "mtime": "2025-07-31T22:06:38.513Z",
+    "size": 16987,
+    "path": "../public/test/all-items-display-dynamic.html"
+  },
+  "/test/collection-log-tester.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"610b-/aMmOrBfu7C0Xn8rfw6fpLha7OQ\"",
+    "mtime": "2025-07-26T17:07:44.753Z",
+    "size": 24843,
+    "path": "../public/test/collection-log-tester.html"
+  },
+  "/test/robust-tester.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"3d8c-MSqE1FyOdJnsqjZ0zt/yaUJBNHQ\"",
+    "mtime": "2025-07-26T17:07:44.753Z",
+    "size": 15756,
+    "path": "../public/test/robust-tester.html"
+  },
+  "/test/simple-test.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"76-iMw9xpz7zqjWqfGBqjQS34fK9fY\"",
+    "mtime": "2025-07-31T23:19:09.576Z",
+    "size": 118,
+    "path": "../public/test/simple-test.html"
+  },
+  "/test/simple-test.html~": {
+    "type": "text/plain; charset=utf-8",
+    "etag": "\"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk\"",
+    "mtime": "2025-07-31T23:19:11.123Z",
+    "size": 0,
+    "path": "../public/test/simple-test.html~"
+  },
+  "/test/test.html": {
+    "type": "text/html; charset=utf-8",
+    "etag": "\"5217-RLi/KQTvtaOLK5LesV+3hhGaCHA\"",
+    "mtime": "2025-07-31T18:46:12.926Z",
+    "size": 21015,
+    "path": "../public/test/test.html"
+  },
+  "/font/runescape.ttf": {
+    "type": "font/ttf",
+    "etag": "\"37a8-H+uLKLjAWQS8z/4bBxweWv6wUkI\"",
+    "mtime": "2025-06-30T00:45:10.329Z",
+    "size": 14248,
+    "path": "../public/font/runescape.ttf"
+  },
+  "/font/runescape_chat.ttf": {
+    "type": "font/ttf",
+    "etag": "\"8e30-HjlH00zcqcuPSYDr/Pnaf7qRh7s\"",
+    "mtime": "2025-07-31T18:09:09.000Z",
+    "size": 36400,
+    "path": "../public/font/runescape_chat.ttf"
+  },
   "/data/cache/items-complete.json": {
     "type": "application/json",
     "etag": "\"2917b24-WuiaxX5zQb6tP+GQQn7ABJ0F8UM\"",
@@ -4541,19 +4548,19 @@ const assets = {
     "size": 2,
     "path": "../public/data/cache/wiki-items.json"
   },
-  "/data/processed/summary.json": {
-    "type": "application/json",
-    "etag": "\"14a-eZ+woDImQ0i2EpxXlDgsd0fIzeo\"",
-    "mtime": "2025-07-26T00:51:11.277Z",
-    "size": 330,
-    "path": "../public/data/processed/summary.json"
-  },
   "/data/streaming/items-stream.jsonl": {
     "type": "text/plain; charset=utf-8",
     "etag": "\"32f95-bc1vzAGCNJGpgbH+QN2HI9VN8oI\"",
     "mtime": "2025-07-24T01:07:36.454Z",
     "size": 208789,
     "path": "../public/data/streaming/items-stream.jsonl"
+  },
+  "/data/processed/summary.json": {
+    "type": "application/json",
+    "etag": "\"14a-eZ+woDImQ0i2EpxXlDgsd0fIzeo\"",
+    "mtime": "2025-07-26T00:51:11.277Z",
+    "size": 330,
+    "path": "../public/data/processed/summary.json"
   }
 };
 
@@ -4749,11 +4756,13 @@ const _MbPw6O = eventHandler((event) => {
 
 const _lazy_TslISg = () => import('../routes/api/collection-log.post.mjs');
 const _lazy_mumCVE = () => import('../routes/api/progress-image.post.mjs');
+const _lazy_KiCd5f = () => import('../routes/docs/collection-log.get.mjs');
 const _lazy_bXVkaM = () => import('../routes/index.get.mjs');
 const _lazy_yVrBVf = () => import('../routes/docs/items.get.mjs');
 const _lazy_rCuUod = () => import('../routes/docs/monsters.get.mjs');
 const _lazy_OB_VPA = () => import('../routes/docs/prayers.get.mjs');
 const _lazy_6MXOI6 = () => import('../routes/docs/progress-image.get.mjs');
+const _lazy_vq9uv7 = () => import('../routes/docs/search.get.mjs');
 const _lazy_MmDG6x = () => import('../routes/index.get2.mjs');
 const _lazy_Nt0PIp = () => import('../routes/items-display-test.get.mjs');
 const _lazy_aaHfqf = () => import('../routes/osrs/equipment/_id_.get.mjs');
@@ -4773,16 +4782,19 @@ const _lazy_ibCIpH = () => import('../routes/osrs/search/_type_.get.mjs');
 const _lazy_USmzaT = () => import('../routes/osrs/weapons/_id_.get.mjs');
 const _lazy_yHSNPL = () => import('../routes/osrs/index.get5.mjs');
 const _lazy_t8j24h = () => import('../routes/test.get.mjs');
+const _lazy_hhItcL = () => import('../routes/tests-all-items-display.get.mjs');
 
 const handlers = [
   { route: '', handler: _MbPw6O, lazy: false, middleware: true, method: undefined },
   { route: '/api/collection-log', handler: _lazy_TslISg, lazy: true, middleware: false, method: "post" },
   { route: '/api/progress-image', handler: _lazy_mumCVE, lazy: true, middleware: false, method: "post" },
+  { route: '/docs/collection-log', handler: _lazy_KiCd5f, lazy: true, middleware: false, method: "get" },
   { route: '/docs', handler: _lazy_bXVkaM, lazy: true, middleware: false, method: "get" },
   { route: '/docs/items', handler: _lazy_yVrBVf, lazy: true, middleware: false, method: "get" },
   { route: '/docs/monsters', handler: _lazy_rCuUod, lazy: true, middleware: false, method: "get" },
   { route: '/docs/prayers', handler: _lazy_OB_VPA, lazy: true, middleware: false, method: "get" },
   { route: '/docs/progress-image', handler: _lazy_6MXOI6, lazy: true, middleware: false, method: "get" },
+  { route: '/docs/search', handler: _lazy_vq9uv7, lazy: true, middleware: false, method: "get" },
   { route: '/', handler: _lazy_MmDG6x, lazy: true, middleware: false, method: "get" },
   { route: '/items-display-test', handler: _lazy_Nt0PIp, lazy: true, middleware: false, method: "get" },
   { route: '/osrs/equipment/:id', handler: _lazy_aaHfqf, lazy: true, middleware: false, method: "get" },
@@ -4801,7 +4813,8 @@ const handlers = [
   { route: '/osrs/search/:type', handler: _lazy_ibCIpH, lazy: true, middleware: false, method: "get" },
   { route: '/osrs/weapons/:id', handler: _lazy_USmzaT, lazy: true, middleware: false, method: "get" },
   { route: '/osrs/weapons', handler: _lazy_yHSNPL, lazy: true, middleware: false, method: "get" },
-  { route: '/test', handler: _lazy_t8j24h, lazy: true, middleware: false, method: "get" }
+  { route: '/test', handler: _lazy_t8j24h, lazy: true, middleware: false, method: "get" },
+  { route: '/tests-all-items-display', handler: _lazy_hhItcL, lazy: true, middleware: false, method: "get" }
 ];
 
 function createNitroApp() {

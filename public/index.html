@@ -132,14 +132,54 @@
             color: #666;
             font-size: 0.9rem;
         }
+
+        .database-info {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 30px;
+        }
+
+        .database-info h3 {
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 5px 0;
+            color: #1976d2;
+        }
+
+        .feature-list li:before {
+            content: "✅ ";
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>🏰 OSRS API Documentation</h1>
-            <p class="subtitle">Complete Old School RuneScape Database API</p>
+            <p class="subtitle">Complete Old School RuneScape Database API with SQLite Backend</p>
         </header>
+        
+        <div class="database-info">
+            <h3>🗄️ Database Features</h3>
+            <ul class="feature-list">
+                <li>SQLite database with 14,000+ items, 3,000+ monsters, and 29 prayers</li>
+                <li>Real-time wiki lookup for missing items</li>
+                <li>Icon support with 100% coverage</li>
+                <li>Advanced search and filtering capabilities</li>
+                <li>Pagination support for all endpoints</li>
+                <li>RESTful API design with comprehensive documentation</li>
+            </ul>
+        </div>
         
         <div class="status">
             <h3>📊 Database Status</h3>
@@ -160,12 +200,6 @@
                     <div class="stat-number" id="totalCount">-</div>
                     <div class="stat-label">Total Records</div>
                 </div>
-                <div class="stat">
-                    <a href="/test/test.html" style="background: #17a2b8; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 0.9rem; display: block;">🧪 Test Suite</a>
-                </div>
-                <div class="stat">
-                    <a href="/items-display-test?dynamic=true" style="background: #28a745; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 0.9rem; display: block;">🚀 Items Display</a>
-                </div>
             </div>
         </div>
         
@@ -174,7 +208,7 @@
                 <span class="method post">POST</span>
                 <h3>Progress Image Generator</h3>
                 <div class="endpoint-path">/api/progress-image</div>
-                <p class="description">Generate custom progress report images with skills, XP, loot, and runtime data.</p>
+                <p class="description">Generate custom progress report images with skills, XP, loot, and runtime data. Supports custom styling and branding.</p>
                 <a href="/docs/progress-image" class="view-docs-btn">View Documentation</a>
             </div>
             
@@ -182,7 +216,7 @@
                 <span class="method post">POST</span>
                 <h3>Collection Log Generator</h3>
                 <div class="endpoint-path">/api/collection-log</div>
-                <p class="description">Generate collection log images showing obtained items and completion progress.</p>
+                <p class="description">Generate collection log images showing obtained items and completion progress with custom styling.</p>
                 <a href="/docs/collection-log" class="view-docs-btn">View Documentation</a>
             </div>
             
@@ -190,23 +224,15 @@
                 <span class="method get">GET</span>
                 <h3>Items Database</h3>
                 <div class="endpoint-path">/osrs/items</div>
-                <p class="description">Browse all OSRS items with pagination, filtering, and detailed information.</p>
+                <p class="description">Browse all OSRS items with pagination, filtering, and detailed information including icons and examine text.</p>
                 <a href="/docs/items" class="view-docs-btn">View Documentation</a>
-            </div>
-            
-            <div class="endpoint-card">
-                <span class="method get">GET</span>
-                <h3>Specific Item</h3>
-                <div class="endpoint-path">/osrs/items/{id}</div>
-                <p class="description">Get detailed information about a specific item by its ID.</p>
-                <a href="/docs/items/id" class="view-docs-btn">View Documentation</a>
             </div>
             
             <div class="endpoint-card">
                 <span class="method get">GET</span>
                 <h3>Equipment Database</h3>
                 <div class="endpoint-path">/osrs/equipment</div>
-                <p class="description">Browse all equipable items with their stats and requirements.</p>
+                <p class="description">Browse all equipable items with their stats, requirements, and slot information.</p>
                 <a href="/docs/equipment" class="view-docs-btn">View Documentation</a>
             </div>
             
@@ -214,7 +240,7 @@
                 <span class="method get">GET</span>
                 <h3>Weapons Database</h3>
                 <div class="endpoint-path">/osrs/weapons</div>
-                <p class="description">Browse all weapons with their combat stats and attack styles.</p>
+                <p class="description">Browse all weapons with their combat stats, attack styles, and requirements.</p>
                 <a href="/docs/weapons" class="view-docs-btn">View Documentation</a>
             </div>
             
@@ -222,40 +248,32 @@
                 <span class="method get">GET</span>
                 <h3>Monsters Database</h3>
                 <div class="endpoint-path">/osrs/monsters</div>
-                <p class="description">Browse all OSRS monsters with their combat stats and attributes.</p>
+                <p class="description">Browse all OSRS monsters with their combat stats, attributes, and drop information.</p>
                 <a href="/docs/monsters" class="view-docs-btn">View Documentation</a>
-            </div>
-            
-            <div class="endpoint-card">
-                <span class="method get">GET</span>
-                <h3>Specific Monster</h3>
-                <div class="endpoint-path">/osrs/monsters/{id}</div>
-                <p class="description">Get detailed information about a specific monster by its ID.</p>
-                <a href="/docs/monsters/id" class="view-docs-btn">View Documentation</a>
             </div>
             
             <div class="endpoint-card">
                 <span class="method get">GET</span>
                 <h3>Prayers Database</h3>
                 <div class="endpoint-path">/osrs/prayers</div>
-                <p class="description">Browse all OSRS prayers with their effects and requirements.</p>
+                <p class="description">Browse all OSRS prayers with their effects, requirements, and drain rates.</p>
                 <a href="/docs/prayers" class="view-docs-btn">View Documentation</a>
-            </div>
-            
-            <div class="endpoint-card">
-                <span class="method get">GET</span>
-                <h3>Specific Prayer</h3>
-                <div class="endpoint-path">/osrs/prayers/{id}</div>
-                <p class="description">Get detailed information about a specific prayer by its ID.</p>
-                <a href="/docs/prayers/id" class="view-docs-btn">View Documentation</a>
             </div>
             
             <div class="endpoint-card">
                 <span class="method get">GET</span>
                 <h3>Search Engine</h3>
                 <div class="endpoint-path">/osrs/search/{type}?q={query}</div>
-                <p class="description">Search across items, monsters, and prayers with flexible query parameters.</p>
+                <p class="description">Search across items, monsters, and prayers with flexible query parameters and fuzzy matching.</p>
                 <a href="/docs/search" class="view-docs-btn">View Documentation</a>
+            </div>
+
+            <div class="endpoint-card">
+                <span class="method get">GET</span>
+                <h3>API Overview</h3>
+                <div class="endpoint-path">/osrs</div>
+                <p class="description">Get complete API documentation, statistics, and available endpoints with examples.</p>
+                <a href="/osrs" class="view-docs-btn">View API Info</a>
             </div>
         </div>
     </div>
@@ -267,10 +285,18 @@
                 const response = await fetch('/osrs');
                 const data = await response.json();
                 
-                document.getElementById('itemsCount').textContent = data.items || 0;
-                document.getElementById('monstersCount').textContent = data.monsters || 0;
-                document.getElementById('prayersCount').textContent = data.prayers || 0;
-                document.getElementById('totalCount').textContent = data.total || 0;
+                if (data.statistics) {
+                    document.getElementById('itemsCount').textContent = data.statistics.items || 0;
+                    document.getElementById('monstersCount').textContent = data.statistics.monsters || 0;
+                    document.getElementById('prayersCount').textContent = data.statistics.prayers || 0;
+                    document.getElementById('totalCount').textContent = data.statistics.total || 0;
+                } else {
+                    // Fallback to old format
+                    document.getElementById('itemsCount').textContent = data.items || 0;
+                    document.getElementById('monstersCount').textContent = data.monsters || 0;
+                    document.getElementById('prayersCount').textContent = data.prayers || 0;
+                    document.getElementById('totalCount').textContent = data.total || 0;
+                }
             } catch (error) {
                 console.error('Failed to load stats:', error);
             }

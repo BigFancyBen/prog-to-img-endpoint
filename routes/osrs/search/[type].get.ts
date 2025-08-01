@@ -5,12 +5,15 @@ export default defineEventHandler(async (event) => {
     const type = getRouterParam(event, 'type')
     const query = getQuery(event)
     const searchQuery = query.q as string
+    const searchId = query.id as string
+    const page = parseInt(query.page as string) || 1
+    const maxResults = parseInt(query.max_results as string) || 25
     
-    if (!searchQuery) {
+    if (!searchQuery && !searchId) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Bad Request',
-        data: { error: 'Search query (q) is required' }
+        data: { error: 'Search query (q) or item ID (id) is required' }
       })
     }
 
@@ -24,12 +27,38 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const results = await OSRSDataService.searchItemsByName(searchQuery)
+    let results = []
+    
+    // Search by ID if provided
+    if (searchId) {
+      const itemId = parseInt(searchId)
+      if (isNaN(itemId)) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          data: { error: 'Invalid item ID. Must be a number.' }
+        })
+      }
+      
+      const item = await OSRSDataService.getItemById(itemId)
+      if (item) {
+        results = [item]
+      }
+    } else {
+      // Search by name
+      results = await OSRSDataService.searchItemsByName(searchQuery, maxResults)
+    }
     
     return {
-      query: searchQuery,
+      query: searchQuery || searchId,
       type,
-      results
+      results,
+      pagination: {
+        page,
+        maxResults,
+        total: results.length,
+        totalPages: Math.ceil(results.length / maxResults)
+      }
     }
   } catch (error) {
     console.error('Error searching:', error)

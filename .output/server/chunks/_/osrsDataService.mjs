@@ -2028,13 +2028,20 @@ class OSRSDataService {
               icon_url: foundItem.icon_url || null
             };
             databaseService.insertItem(dbItemData);
-            return [databaseService.getItemById(foundItem.id)];
+            const savedItem = databaseService.getItemById(foundItem.id);
+            if (savedItem) {
+              const transformedItem = await this.transformItemData(savedItem);
+              return [transformedItem];
+            }
           }
         } catch (error) {
           console.error(`\u274C Wiki lookup failed for "${query}":`, error.message);
         }
       }
-      return items;
+      const transformedItems = await Promise.all(
+        items.map((item) => this.transformItemData(item))
+      );
+      return transformedItems;
     } catch (error) {
       console.error(`Error searching items for "${query}":`, error);
       return [];
