@@ -38,15 +38,18 @@ export async function generateProgressSVG(data) {
   const canvasHeight = titleHeight + lootHeight + xpHeight
   const canvasWidth = CANVAS_CONFIG.WIDTH
 
+  const fontFaceCss = await getEmbeddedFontFaceCss()
+
   // Start SVG with transparent background
   let svg = `<svg width="${canvasWidth}" height="${canvasHeight}" xmlns="http://www.w3.org/2000/svg">`
-  
+
   // Add font definition and drop shadow filter
   svg += `<defs>
     <filter id="rs-shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="2" dy="2" stdDeviation="0" flood-color="black" flood-opacity="1"/>
     </filter>
     <style>
+      ${fontFaceCss}
       .runescape-font {
         font-family: 'RuneScape UF', 'Runescape', monospace;
         font-weight: normal;
@@ -94,6 +97,103 @@ export async function generateProgressSVG(data) {
     svg += `<text x="15" y="${currentY + 25}" class="runescape-font yellow-text section-text" filter="url(#rs-shadow)">XP:</text>`
     svg += await generateXPIcons(data.xp_earned, currentY)
   }
+
+  svg += '</svg>'
+  return svg
+}
+
+/**
+ * Generate level-up SVG
+ * Renders the skill icon at 2x the normal XP-section size (50x50) with
+ * "Level <n>" text rendered next to it in RuneScape style.
+ * @param {Object} data - { skill, level }
+ * @returns {Promise<string>} SVG markup
+ */
+async function readFileBase64(absPath) {
+  const buffer = await readFile(absPath)
+  return buffer.toString('base64')
+}
+
+async function getLevelUpBackgroundDataUrl() {
+  const b64 = await readFileBase64(join(process.cwd(), 'icons', 'levelUpBackground.png'))
+  return `data:image/png;base64,${b64}`
+}
+
+let _embeddedFontFaceCssPromise = null
+function getEmbeddedFontFaceCss() {
+  if (!_embeddedFontFaceCssPromise) {
+    _embeddedFontFaceCssPromise = (async () => {
+      const fontDir = join(process.cwd(), 'font')
+      const [npcChat, chat, uf, base] = await Promise.all([
+        readFileBase64(join(fontDir, 'runescape_npc_chat.ttf')),
+        readFileBase64(join(fontDir, 'runescape_chat.ttf')),
+        readFileBase64(join(fontDir, 'runescape_uf.ttf')),
+        readFileBase64(join(fontDir, 'runescape.ttf'))
+      ])
+      return `
+        @font-face { font-family: 'Runescape NPC Chat'; src: url(data:font/ttf;base64,${npcChat}) format('truetype'); }
+        @font-face { font-family: 'Runescape Chat'; src: url(data:font/ttf;base64,${chat}) format('truetype'); }
+        @font-face { font-family: 'RuneScape UF'; src: url(data:font/ttf;base64,${uf}) format('truetype'); }
+        @font-face { font-family: 'Runescape'; src: url(data:font/ttf;base64,${base}) format('truetype'); }
+      `
+    })()
+  }
+  return _embeddedFontFaceCssPromise
+}
+
+function titleCaseSkill(skill) {
+  if (!skill) return ''
+  return skill.charAt(0).toUpperCase() + skill.slice(1).toLowerCase()
+}
+
+export async function generateLevelUpSVG(data) {
+  await databaseService.init()
+
+  const canvasWidth = 1040
+  const canvasHeight = 283
+
+  const [bgDataUrl, fontFaceCss] = await Promise.all([
+    getLevelUpBackgroundDataUrl(),
+    getEmbeddedFontFaceCss()
+  ])
+
+  const iconBox = { x: 80, y: 100, width: 80, height: 80 }
+  const textCenterX = 520
+  const skillTitle = titleCaseSkill(data.skill)
+  const curDate = getCurrentDate()
+
+  let svg = `<svg width="${canvasWidth}" height="${canvasHeight}" xmlns="http://www.w3.org/2000/svg">`
+
+  svg += `<defs>
+    <filter id="rs-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="0" flood-color="black" flood-opacity="1"/>
+    </filter>
+    <style>
+      ${fontFaceCss}
+      .rs-chat {
+        font-family: 'Runescape NPC Chat', 'Runescape Chat', monospace;
+        font-weight: normal;
+        font-style: normal;
+        text-anchor: middle;
+      }
+      .congrats { font-size: 72px; fill: #002783; }
+      .your-level { font-size: 72px; fill: #000000; }
+      .date-line { font-size: 30px; fill: #ffff00; text-anchor: end; font-family: 'RuneScape UF', 'Runescape', monospace; }
+    </style>
+  </defs>`
+
+  svg += `<image href="${bgDataUrl}" x="0" y="0" width="${canvasWidth}" height="${canvasHeight}"/>`
+
+  try {
+    const iconBase64 = await FileService.getSkillIcon(data.skill)
+    svg += `<image href="${iconBase64}" x="${iconBox.x}" y="${iconBox.y}" width="${iconBox.width}" height="${iconBox.height}" preserveAspectRatio="xMidYMid meet"/>`
+  } catch (error) {
+    console.warn(`Could not load icon for skill ${data.skill}:`, error.message)
+  }
+
+  svg += `<text x="${textCenterX}" y="125" class="rs-chat congrats">Congratulations, ${escapeXML(data.username)}!</text>`
+  svg += `<text x="${textCenterX}" y="195" class="rs-chat your-level">Your ${escapeXML(skillTitle)} level is now ${data.level}.</text>`
+  svg += `<text x="1020" y="260" class="date-line" filter="url(#rs-shadow)">${escapeXML(curDate)}</text>`
 
   svg += '</svg>'
   return svg
@@ -148,13 +248,15 @@ export async function generateCollectionLogSVG(data) {
   const bgImagePng = await convertToPngDataUrl(bgImageBase64)
   const itemIconPng = await convertToPngDataUrl(itemIconBase64)
 
+  const fontFaceCss = await getEmbeddedFontFaceCss()
+
   let svg = `<svg width="${WIDTH}" height="${HEIGHT}" xmlns="http://www.w3.org/2000/svg">`;
-  // Add drop shadow filter and style (no @font-face, just font-family)
   svg += `<defs>
     <filter id="rs-shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="2" dy="2" stdDeviation="0" flood-color="black" flood-opacity="1"/>
     </filter>
     <style>
+      ${fontFaceCss}
       .runescape-font {
         font-family: 'RuneScape UF', 'Runescape', monospace;
         font-weight: normal;

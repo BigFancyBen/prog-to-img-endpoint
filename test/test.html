@@ -264,6 +264,7 @@
             <h3>🌐 Available API Endpoints</h3>
             <ul class="endpoint-list">
                 <li><span class="method post">POST</span> <code>/api/progress-image</code> - Generate progress report</li>
+                <li><span class="method post">POST</span> <code>/api/level-up</code> - Generate level-up notification</li>
                 <li><span class="method post">POST</span> <code>/api/collection-log</code> - Generate collection log</li>
                 <li><span class="method get">GET</span> <code>/osrs/items</code> - List all items (paginated)</li>
                 <li><span class="method get">GET</span> <code>/osrs/items/{id}</code> - Get specific item</li>
@@ -480,6 +481,24 @@ class OSRSAPITester {
                 runtime: 60,
                 xp_earned: [{"skill": "agility", "xp": "126,585"}],
                 loot: [{"id": 249, "name": "Guam leaf", "count": 43}]
+            });
+            return response.data.body ? JSON.parse(response.data.body) : response.data;
+        }, 'progressTests');
+
+        this.createTestCard('Level Up — Strength 73', async () => {
+            const response = await axios.post(`${this.serverUrl}/api/level-up`, {
+                username: "Zezima",
+                skill: "strength",
+                level: 73
+            });
+            return response.data.body ? JSON.parse(response.data.body) : response.data;
+        }, 'progressTests');
+
+        this.createTestCard('Level Up — Slayer 99', async () => {
+            const response = await axios.post(`${this.serverUrl}/api/level-up`, {
+                username: "Big Fancy Ben",
+                skill: "slayer",
+                level: 99
             });
             return response.data.body ? JSON.parse(response.data.body) : response.data;
         }, 'progressTests');

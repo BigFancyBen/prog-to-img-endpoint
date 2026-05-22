@@ -1,4 +1,4 @@
-import { generateProgressSVG, generateCollectionLogSVG, svgToPng } from './svgGenerationService.js'
+import { generateProgressSVG, generateCollectionLogSVG, generateLevelUpSVG, svgToPng } from './svgGenerationService.js'
 
 // Performance cache for generated images
 const IMAGE_CACHE = new Map()
@@ -61,6 +61,32 @@ export async function generateProgressImage(data) {
     return result
   } catch (error) {
     console.error('Error generating progress image:', error)
+    throw error
+  }
+}
+
+export async function generateLevelUpImage(data) {
+  try {
+    const cacheKey = `level_${JSON.stringify(data)}`
+
+    const cached = getCachedImage(cacheKey, data)
+    if (cached) {
+      return cached
+    }
+
+    const svgString = await generateLevelUpSVG(data)
+    const pngBuffer = await svgToPng(svgString)
+
+    const result = {
+      statusCode: 200,
+      body: JSON.stringify(`data:image/png;base64,${pngBuffer.toString('base64')}`)
+    }
+
+    setCachedImage(cacheKey, result)
+
+    return result
+  } catch (error) {
+    console.error('Error generating level-up image:', error)
     throw error
   }
 }
