@@ -41,7 +41,7 @@ export async function generateProgressSVG(data) {
   const fontFaceCss = await getEmbeddedFontFaceCss()
 
   // Start SVG with transparent background
-  let svg = `<svg width="${canvasWidth}" height="${canvasHeight}" xmlns="http://www.w3.org/2000/svg">`
+  let svg = `<svg width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 ${canvasWidth} ${canvasHeight}" xmlns="http://www.w3.org/2000/svg">`
 
   // Add font definition and drop shadow filter
   svg += `<defs>
@@ -162,7 +162,7 @@ export async function generateLevelUpSVG(data) {
   const skillTitle = titleCaseSkill(data.skill)
   const curDate = getCurrentDate()
 
-  let svg = `<svg width="${canvasWidth}" height="${canvasHeight}" xmlns="http://www.w3.org/2000/svg">`
+  let svg = `<svg width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 ${canvasWidth} ${canvasHeight}" xmlns="http://www.w3.org/2000/svg">`
 
   svg += `<defs>
     <filter id="rs-shadow" x="-20%" y="-20%" width="140%" height="140%">
@@ -464,8 +464,8 @@ async function convertToPngDataUrl(dataUrl) {
  */
 export async function svgToPng(svgString) {
   try {
-    const result = await sharp(Buffer.from(svgString))
-      .png({ 
+    const result = await sharp(Buffer.from(svgString), { density: 72 })
+      .png({
         quality: 100,
         compressionLevel: 0,
         adaptiveFiltering: false,
