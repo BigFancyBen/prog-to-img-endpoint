@@ -152,44 +152,96 @@ class WikiLookupService {
   async lookupItemByWikiPage(wikiPageName, expectedId = null) {
     try {
       console.log(`🔍 Looking up wiki page "${wikiPageName}" for item ID ${expectedId}...`)
-      
-      // Decode URL-encoded page name
-      const decodedPageName = decodeURIComponent(wikiPageName)
-      
+
+      const decoded = decodeURIComponent(wikiPageName)
+      const decodedPageName = decoded.split('#')[0]
+      const anchor = decoded.includes('#') ? decoded.split('#').slice(1).join('#') : null
+
       // Extract all versions from the wiki page
       const itemVersions = await this.extractAllVersionsFromPage(decodedPageName)
-      
+
       if (itemVersions.length === 0) {
         console.log(`❌ No item data found on wiki page "${decodedPageName}"`)
         return null
       }
-      
-      // If we have an expected ID, try to find the exact match
+
+      // Save all versions that have real IDs to the database
+      for (const version of itemVersions) {
+        if (version.id != null) {
+          await this.addItemToDatabase(version)
+        }
+      }
+
+      // If we have an expected ID, try to find the exact match by infobox ID
       if (expectedId !== null) {
         const exactMatch = itemVersions.find(item => item.id === expectedId)
         if (exactMatch) {
           console.log(`✅ Found exact match: ${exactMatch.name} (ID: ${exactMatch.id})`)
-          
-          // Save all versions to the database
-          for (const version of itemVersions) {
-            await this.addItemToDatabase(version)
-          }
-          
           return exactMatch
         }
       }
-      
-      // If no exact match or no expected ID, use the first version
+
+      // Anchor-based fallback: match anchor text against version names
+      // (including _versionName for Construction / ID-less infoboxes)
+      if (expectedId !== null && anchor) {
+        const anchorLower = anchor.replace(/_/g, ' ').toLowerCase()
+        const matchName = (item) => {
+          const names = [item.name, item._versionName].filter(Boolean).map(n => n.toLowerCase())
+          return names.some(n => n === anchorLower) ||
+                 names.some(n => n.includes(anchorLower) || anchorLower.includes(n))
+        }
+        const anchorMatch = itemVersions.find(item =>
+          [item.name, item._versionName].filter(Boolean).some(n => n.toLowerCase() === anchorLower)
+        ) || itemVersions.find(matchName)
+
+        if (anchorMatch) {
+          const aliasItem = { ...anchorMatch, id: expectedId }
+          const wikiIconName = aliasItem._iconFilename
+          delete aliasItem._versionName
+          delete aliasItem._iconFilename
+          // Download icon now that we have a real ID — prefer the parsed wiki icon filename
+          if (!aliasItem.icon_data && aliasItem.icon_path == null) {
+            const cleanIcon = wikiIconName ? wikiIconName.replace(/\.png$/i, '') : null
+            const iconName = cleanIcon || (anchorMatch.name || anchor).replace(/\.png$/i, '')
+            const iconUrl = `https://oldschool.runescape.wiki/images/${iconName.replace(/ /g, '_')}.png`
+            const iconResult = await this.downloadIcon(iconUrl, `${expectedId}.png`, expectedId, iconName, decodedPageName)
+            if (iconResult && iconResult.buffer) {
+              aliasItem.icon_data = iconResult.buffer
+              aliasItem.icon_path = iconResult.fileName
+            }
+          }
+          await this.addItemToDatabase(aliasItem)
+          console.log(`✅ Anchor match: "${anchor}" → ${anchorMatch.name}, saved as ID ${expectedId}`)
+          return aliasItem
+        }
+      }
+
+      // Last resort: no ID match and no anchor match — save with expectedId
+      // using the first version's data so the items table stays dense.
+      if (expectedId !== null) {
+        const fallback = { ...itemVersions[0], id: expectedId }
+        const wikiIconName = fallback._iconFilename
+        delete fallback._versionName
+        delete fallback._iconFilename
+        if (!fallback.icon_data && fallback.icon_path == null) {
+          const cleanIcon = wikiIconName ? wikiIconName.replace(/\.png$/i, '') : null
+          const iconName = cleanIcon || (fallback.name || decodedPageName).replace(/\.png$/i, '')
+          const iconUrl = `https://oldschool.runescape.wiki/images/${iconName.replace(/ /g, '_')}.png`
+          const iconResult = await this.downloadIcon(iconUrl, `${expectedId}.png`, expectedId, iconName, decodedPageName)
+          if (iconResult && iconResult.buffer) {
+            fallback.icon_data = iconResult.buffer
+            fallback.icon_path = iconResult.fileName
+          }
+        }
+        await this.addItemToDatabase(fallback)
+        console.log(`⚠️  No exact/anchor match; saved first version as ID ${expectedId}`)
+        return fallback
+      }
+
       const firstItem = itemVersions[0]
       console.log(`✅ Found item: ${firstItem.name} (ID: ${firstItem.id}) with ${itemVersions.length} versions`)
-      
-      // Save all versions to the database
-      for (const version of itemVersions) {
-        await this.addItemToDatabase(version)
-      }
-      
       return firstItem
-      
+
     } catch (error) {
       console.error(`❌ Error looking up wiki page "${wikiPageName}":`, error.message)
       return null
@@ -269,7 +321,9 @@ class WikiLookupService {
           const infoboxes = doc.infoboxes()
           for (const infobox of infoboxes) {
             const data = infobox.data || {}
-            if (data.id || data.name || data.examine || data.value) {
+            const keys = Object.keys(data)
+            if (data.id || data.name || data.examine || data.value ||
+                keys.some(k => /^(name|id|version|examine)\d+$/i.test(k))) {
               parser.template = parser.processInfobox(infobox)
               hasInfobox = true
               break
@@ -281,10 +335,10 @@ class WikiLookupService {
       if (!hasInfobox) return null
 
       const id = parser.extractId()
-      if (!id) return null
+      if (id == null) return null  // id=0 is valid (some quest items)
 
       // If we're looking for a specific ID, make sure it matches
-      if (expectedId && id.toString() !== expectedId.toString()) {
+      if (expectedId != null && id.toString() !== expectedId.toString()) {
         return null
       }
 
@@ -416,7 +470,9 @@ class WikiLookupService {
           const infoboxes = doc.infoboxes()
           for (const infobox of infoboxes) {
             const data = infobox.data || {}
-            if (data.id || data.name || data.examine || data.value) {
+            const keys = Object.keys(data)
+            if (data.id || data.name || data.examine || data.value ||
+                keys.some(k => /^(name|id|version|examine)\d+$/i.test(k))) {
               parser.template = parser.processInfobox(infobox)
               hasInfobox = true
               break
@@ -433,8 +489,8 @@ class WikiLookupService {
       if (!parser.isVersioned) {
         // Single version item
         const id = parser.extractId()
-        if (!id) return []
-        
+        if (id == null) return []  // id=0 is valid (some quest items)
+
         const itemData = await this.extractSingleItemData(parser, pageTitle, id, null)
         return itemData ? [itemData] : []
       }
@@ -457,14 +513,30 @@ class WikiLookupService {
       // Extract data for each version
       for (const versionNum of Array.from(versionNumbers).sort()) {
         const id = this.extractVersionedValue(template, 'id', versionNum)
-        if (id) {
+        if (id != null && id !== '') {
           const itemData = await this.extractSingleItemData(parser, pageTitle, id, versionNum)
           if (itemData) {
             versions.push(itemData)
           }
         }
       }
-      
+
+      // Construction / ID-less infoboxes: extract versions using name as identifier
+      if (versions.length === 0 && versionNumbers.size > 0) {
+        for (const versionNum of Array.from(versionNumbers).sort()) {
+          const name = this.extractVersionedValue(template, 'name', versionNum) ||
+                       this.extractVersionedValue(template, 'version', versionNum)
+          if (name) {
+            const itemData = await this.extractSingleItemData(parser, pageTitle, null, versionNum)
+            if (itemData) {
+              itemData.id = null
+              itemData._versionName = name
+              versions.push(itemData)
+            }
+          }
+        }
+      }
+
       return versions
     } catch (error) {
       console.error(`Error extracting versions from ${pageTitle}:`, error.message)
@@ -486,17 +558,14 @@ class WikiLookupService {
       value = this.cleanValue(template[field])
     }
     
-    // Special handling for image fields - clean the wiki markup
-    if (value && field === 'image') {
-      // If it's a File: link in wiki markup, extract just the filename
-      const fileMatch = value.match(/\[\[File:([^\]]+)\]\]/)
+    // Special handling for image/icon fields - clean the wiki markup
+    if (value && (field === 'image' || field === 'icon')) {
+      const fileMatch = value.match(/\[\[File:([^\]|]+)/i)
       if (fileMatch) {
-        // Extract filename and remove .png extension
-        const filename = fileMatch[1].replace(/\.png$/i, '')
-        return filename
+        return fileMatch[1].replace(/\.png$/i, '')
       }
     }
-    
+
     return value
   }
 
@@ -538,34 +607,35 @@ class WikiLookupService {
         return parser.extractValue(field)
       }
       
-      // Extract item data
-      const iconFilename = versionNum ? 
-        this.extractVersionedValue(template, 'image', versionNum) || parser.extractIcon() :
+      // Extract item data — Construction infoboxes use "icon" fields for inventory sprites
+      const rawIcon = versionNum ?
+        this.extractVersionedValue(template, 'icon', versionNum) ||
+        this.extractVersionedValue(template, 'image', versionNum) ||
+        parser.extractIcon() :
         parser.extractIcon()
+      const iconFilename = (rawIcon && /^n\/?a$/i.test(rawIcon.trim())) ? null : rawIcon
       
       let localIconPath = null
       let iconData = null
       
-      if (iconFilename) {
+      if (iconFilename && id != null) {
         const iconUrl = parser.getIconUrl(iconFilename)
         if (iconUrl) {
-          // Download and cache the icon in database using item ID as filename
           const iconFileName = `${id}.png`
-          const itemName = InfoboxCleaner.clean(getName('name'), 'string') || 
+          const itemName = InfoboxCleaner.clean(getName('name'), 'string') ||
                            (versionNum ? `${pageTitle} ${versionNum}` : pageTitle)
-          // For intelligent pattern generation, use the extracted icon filename instead of generic item name
-          const iconNameForPattern = iconFilename || itemName
+          // Strip .png extension from pattern name to avoid double-extension URLs
+          const iconNameForPattern = (iconFilename || itemName).replace(/\.png$/i, '')
           const iconResult = await this.downloadIcon(iconUrl, iconFileName, id, iconNameForPattern, pageTitle)
           if (iconResult && iconResult.buffer) {
             localIconPath = iconResult.fileName
-            // Store the icon buffer for later database insertion
             iconData = iconResult.buffer
           }
         }
       }
 
       const itemData = {
-        id: parseInt(id),
+        id: id != null ? parseInt(id) : null,
         name: InfoboxCleaner.clean(getName('name'), 'string') || 
               (versionNum ? `${pageTitle} ${versionNum}` : pageTitle),
         examine: InfoboxCleaner.clean(getName('examine'), 'examine'),
@@ -594,7 +664,8 @@ class WikiLookupService {
         destruction: InfoboxCleaner.clean(getName('destroy'), 'string'),
         last_updated: new Date().toISOString(),
         _source: 'wiki_lookup',
-        _version: versionNum || 1
+        _version: versionNum || 1,
+        _iconFilename: iconFilename || null
       }
 
       // Check if item is equipable
@@ -805,7 +876,7 @@ class WikiLookupService {
    * Download and cache an icon file in database with enhanced intelligent patterns
    */
   async downloadIcon(iconUrl, fileName, itemId, itemName = null, wikiPageTitle = null) {
-    if (!iconUrl || !fileName || !itemId) return null
+    if (!iconUrl || !fileName || itemId == null) return null
     
     try {
       // Check if icon already exists in database

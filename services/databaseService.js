@@ -274,6 +274,19 @@ class DatabaseService {
    * Insert or update an item
    */
   insertItem(itemData) {
+    // Preserve existing icon_data when the new value is null
+    const iconData = itemData.icon_data || null
+    const iconPath = itemData.icon_path || null
+    let resolvedIconData = iconData
+    let resolvedIconPath = iconPath
+    if (!iconData) {
+      const existing = this.db.prepare('SELECT icon_data, icon_path FROM items WHERE id = ?').get(itemData.id)
+      if (existing) {
+        resolvedIconData = existing.icon_data || null
+        resolvedIconPath = existing.icon_path || iconPath
+      }
+    }
+
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO items (
         id, name, examine, wiki_name, wiki_url, icon_path, icon_url, icon_data,
@@ -292,9 +305,9 @@ class DatabaseService {
       itemData.examine,
       itemData.wiki_name,
       itemData.wiki_url,
-      itemData.icon_path || null,
+      resolvedIconPath,
       itemData.icon_url || null,
-      itemData.icon_data || null, // Include icon buffer data
+      resolvedIconData,
       itemData.members ? 1 : 0,
       itemData.tradeable ? 1 : 0,
       itemData.tradeable_on_ge ? 1 : 0,
