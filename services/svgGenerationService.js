@@ -1,4 +1,5 @@
 import sharp from 'sharp'
+import { Resvg } from '@resvg/resvg-js'
 import { readFile } from 'fs/promises'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
@@ -58,12 +59,12 @@ export async function generateProgressSVG(data) {
       .yellow-text { fill: #ffff00; }
       .orange-text { fill: #ff981f; }
       .white-text { fill: #ffffff; }
-      .title-text { font-size: 30px; }
-      .subtitle-text { font-size: 16px; }
-      .section-text { font-size: 20px; }
-      .small-text { font-size: 14px; }
-      .item-count { font-size: 14px; text-anchor: end; }
-      .xp-text { font-size: 16px; text-anchor: middle; }
+      .title-text { font-size: 22px; }
+      .subtitle-text { font-size: 12px; }
+      .section-text { font-size: 14px; }
+      .small-text { font-size: 10px; }
+      .item-count { font-size: 10px; text-anchor: end; }
+      .xp-text { font-size: 12px; text-anchor: middle; }
     </style>
   </defs>`
 
@@ -176,9 +177,9 @@ export async function generateLevelUpSVG(data) {
         font-style: normal;
         text-anchor: middle;
       }
-      .congrats { font-size: 72px; fill: #002783; }
-      .your-level { font-size: 72px; fill: #000000; }
-      .date-line { font-size: 30px; fill: #ffff00; text-anchor: end; font-family: 'RuneScape UF', 'Runescape', monospace; }
+      .congrats { font-size: 52px; fill: #002783; }
+      .your-level { font-size: 52px; fill: #000000; }
+      .date-line { font-size: 22px; fill: #ffff00; text-anchor: end; font-family: 'RuneScape UF', 'Runescape', monospace; }
     </style>
   </defs>`
 
@@ -266,11 +267,11 @@ export async function generateCollectionLogSVG(data) {
       .white-text { fill: #ffffff; }
       .examine-text { fill: #ffffff; }
       .date-small { fill: #cccccc; }
-      .title-text { font-size: 25px; text-anchor: middle; }
-      .date-text { font-size: 16px; text-anchor: middle; }
-      .item-text { font-size: 22px; text-anchor: middle; }
-      .examine-item-text { font-size: 14px; text-anchor: middle; font-family: 'Runescape Chat', 'RuneScape UF', 'Runescape', monospace; font-style: italic; }
-      .small-date-text { font-size: 12px; text-anchor: end; }
+      .title-text { font-size: 18px; text-anchor: middle; }
+      .date-text { font-size: 12px; text-anchor: middle; }
+      .item-text { font-size: 16px; text-anchor: middle; }
+      .examine-item-text { font-size: 10px; text-anchor: middle; font-family: 'Runescape Chat', 'RuneScape UF', 'Runescape', monospace; font-style: italic; }
+      .small-date-text { font-size: 9px; text-anchor: end; }
     </style>
   </defs>`;
 
@@ -458,25 +459,21 @@ async function convertToPngDataUrl(dataUrl) {
 }
 
 /**
- * Convert SVG to PNG using Sharp
+ * Convert SVG to PNG using resvg for cross-platform consistency
  * @param {string} svgString - SVG markup
  * @returns {Promise<Buffer>} PNG buffer
  */
 export async function svgToPng(svgString) {
-  try {
-    const result = await sharp(Buffer.from(svgString), { density: 72 })
-      .png({
-        quality: 100,
-        compressionLevel: 0,
-        adaptiveFiltering: false,
-        force: true
-      })
-      .toBuffer()
-    
-    return result
-  } catch (error) {
-    throw error
-  }
+  const fontDir = join(process.cwd(), 'font')
+  const resvg = new Resvg(svgString, {
+    font: {
+      loadSystemFonts: false,
+      fontDirs: [fontDir]
+    },
+    fitTo: { mode: 'original' }
+  })
+  const rendered = resvg.render()
+  return rendered.asPng()
 }
 
 /**
