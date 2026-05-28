@@ -2,6 +2,7 @@ node_modules
 package-lock.json
 icons/items/
 .nitro/
+.output/
 *.db-shm
 *.db-wal
 logs/

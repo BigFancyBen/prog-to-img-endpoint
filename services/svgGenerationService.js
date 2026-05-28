@@ -1,6 +1,7 @@
 import sharp from 'sharp'
 import { Resvg } from '@resvg/resvg-js'
 import { readFile } from 'fs/promises'
+import { existsSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { CANVAS_CONFIG, COLORS, FONTS, COLLECTION_LOG_CONFIG } from '../config/constants.js'
@@ -11,6 +12,32 @@ import databaseService from './databaseService.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+
+function findAssetDir(name, sentinelFile) {
+  const entryDir = process.argv[1] ? dirname(process.argv[1]) : null
+  const candidates = [
+    join(process.cwd(), name),
+    entryDir && join(entryDir, '..', 'public', name),
+    entryDir && join(entryDir, name),
+    join(process.cwd(), '.output', 'public', name),
+  ].filter(Boolean)
+  for (const p of candidates) {
+    if (existsSync(join(p, sentinelFile))) return p
+  }
+  return join(process.cwd(), name)
+}
+
+let _cachedFontDir = null
+function resolveFontDir() {
+  if (!_cachedFontDir) _cachedFontDir = findAssetDir('font', 'runescape.ttf')
+  return _cachedFontDir
+}
+
+let _cachedIconsDir = null
+function resolveIconsDir() {
+  if (!_cachedIconsDir) _cachedIconsDir = findAssetDir('icons', 'levelUpBackground.png')
+  return _cachedIconsDir
+}
 
 /**
  * Generate progress report SVG
@@ -116,7 +143,7 @@ async function readFileBase64(absPath) {
 }
 
 async function getLevelUpBackgroundDataUrl() {
-  const b64 = await readFileBase64(join(process.cwd(), 'icons', 'levelUpBackground.png'))
+  const b64 = await readFileBase64(join(resolveIconsDir(), 'levelUpBackground.png'))
   return `data:image/png;base64,${b64}`
 }
 
@@ -124,7 +151,7 @@ let _embeddedFontFaceCssPromise = null
 function getEmbeddedFontFaceCss() {
   if (!_embeddedFontFaceCssPromise) {
     _embeddedFontFaceCssPromise = (async () => {
-      const fontDir = join(process.cwd(), 'font')
+      const fontDir = resolveFontDir()
       const [npcChat, chat, uf, base] = await Promise.all([
         readFileBase64(join(fontDir, 'runescape_npc_chat.ttf')),
         readFileBase64(join(fontDir, 'runescape_chat.ttf')),
@@ -416,7 +443,7 @@ function processCoinStacks(lootItems) {
  */
 async function getFontBase64() {
   try {
-    const fontPath = join(process.cwd(), 'font', 'runescape.ttf')
+    const fontPath = join(resolveFontDir(), 'runescape.ttf')
     console.log('Attempting to load font from:', fontPath)
     const fontBuffer = await readFile(fontPath)
     return fontBuffer.toString('base64')
@@ -464,7 +491,7 @@ async function convertToPngDataUrl(dataUrl) {
  * @returns {Promise<Buffer>} PNG buffer
  */
 export async function svgToPng(svgString) {
-  const fontDir = join(process.cwd(), 'font')
+  const fontDir = resolveFontDir()
   const resvg = new Resvg(svgString, {
     font: {
       loadSystemFonts: false,
